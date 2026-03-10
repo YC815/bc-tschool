@@ -1,36 +1,168 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚴‍♂️ 元素傳遞 - 單車環島互動遊戲
 
-## Getting Started
+> 一場與感官對話的旅程。風、海、火、土、木、金——六個元素，四個站點，一次獨特的西部海岸騎行體驗。
 
-First, run the development server:
+**🌐 線上體驗**: [https://bc.tschool.cc](https://bc.tschool.cc)
+
+---
+
+## 📖 專案簡介
+
+這是一個結合實體單車環島與數位互動的實境解謎遊戲。參與者在騎行過程中，透過四個站點的任務，收集並傳遞六個自然元素（風、海、火、土、木、金），最終生成專屬的旅程紀念卡片。
+
+### 🎯 核心概念
+
+- **最小必要手機使用**: 路上不拍照，只在站點開啟網頁
+- **感官體驗優先**: 用身體感受風、海、陽光、土地與時間
+- **元素傳遞敘事**: 每個站點都有獨特的元素主題與任務
+- **旅程封存**: 終點生成專屬紀念卡片，保存這趟獨特體驗
+
+---
+
+## 🗺️ 遊戲路線
+
+| 站點 | 地點 | 元素 | 任務主題 |
+|------|------|------|----------|
+| **站一** | 香山 17公里海岸線 | 🌬️ 風 × 🌊 海 | 「流動讓＿＿＿＿。」 |
+| **站二** | 通霄 日落大道觀景台 | 🔥 火 | 「光讓＿＿＿＿。」 |
+| **站三** | 大甲 鎮瀾宮前廣場 | 🌍 土 × 🌳 木 | 「時間在這裡＿＿＿＿。」 |
+| **站四** | 台中 舊火車站前廣場 | ✨ 金 | 「這趟旅程帶給我的＿＿＿＿。」 |
+
+**總騎行距離**: 101 公里  
+**預估騎乘時間**: 5 小時 50 分鐘
+
+---
+
+## ✨ 遊戲特色
+
+### 🎮 簡單上手
+- 掃碼即玩，無需安裝 App
+- 定點任務，抵達站點才開網頁
+- 全程手機只用四次（每站一次）
+
+### 📸 獨特回報機制
+- 每站拍攝一張照片
+- 留下一句話回應元素主題
+- 下一站才能回報，強化體驗連結
+
+### 🎨 專屬紀念成果
+- 四站照片拼貼成紀念卡片
+- 顯示所有文字回應
+- 可下載分享至社群
+
+### 📱 行動裝置優先
+- 專為手機騎行場景設計
+- 直覺的照片上傳介面
+- 流暢的單手操作體驗
+
+---
+
+## 🛠️ 技術架構
+
+| 層級 | 技術 | 說明 |
+|------|------|------|
+| **前端框架** | Next.js 16 (App Router) | React 全棧框架 |
+| **語言** | TypeScript | 型別安全開發 |
+| **樣式** | Tailwind CSS + shadcn/ui | 現代化 UI 元件庫 |
+| **資料庫** | PostgreSQL | 資料持久化儲存 |
+| **ORM** | Prisma | 型別安全的資料庫操作 |
+| **部署** | Zeabur | 雲端託管服務 |
+| **圖片儲存** | Zeabur Storage | 照片檔案儲存 |
+
+---
+
+## 🚀 快速開始
+
+### 環境需求
+- Node.js 18+
+- PostgreSQL 資料庫
+
+### 安裝步驟
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. 進入專案目錄
+cd web
+
+# 2. 安裝依賴
+npm install
+
+# 3. 設定環境變數
+cp .env.example .env.local
+# 編輯 .env.local，填入資料庫連線資訊
+
+# 4. 初始化資料庫
+npx prisma migrate dev
+
+# 5. 建構生產版本
+npm run build
+
+# 6. 啟動服務
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 開發指令
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# 程式碼品質檢查
+npm run lint
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# TypeScript 型別檢查
+npx tsc --noEmit
 
-## Learn More
+# 執行測試
+npm test
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 專案結構
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+/web/                    # Next.js 專案目錄
+├── app/                 # App Router
+│   ├── page.tsx        # 遊戲入口首頁
+│   ├── station/        # 四個站點頁面
+│   ├── result/         # 成果頁面
+│   └── api/            # API 路由
+├── components/          # React 元件
+│   ├── ui/            # shadcn/ui 元件
+│   ├── photo-uploader.tsx
+│   └── memory-card.tsx
+├── lib/                 # 工具函式
+├── prisma/             # Prisma 設定
+└── public/             # 靜態資源
 
-## Deploy on Vercel
+/docs/                   # 企劃文件
+├── 實境解謎規劃.md      # 遊戲流程設計
+├── 手冊資訊整理.md      # 停靠點資訊
+└── 技術架構.md          # 技術規格文件
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 設計理念
+
+本專案遵循以下開發原則：
+
+- **簡潔優先**: 函式不超過 3 層縮排，只做一件事
+- **消除特殊情況**: 用資料結構設計取代 if/else 分支
+- **永不破壞現有功能**: 向後相容是鐵律
+- **行動裝置優先**: 手機體驗是首要考量
+
+---
+
+## 📝 授權
+
+本專案為單車環島 Day.2 活動專屬開發。
+
+---
+
+## 🤝 貢獻
+
+歡迎提交 Issue 或 Pull Request 來改善這個專案！
+
+---
+
+<p align="center">
+  <sub>Built with ❤️ for the cycling journey from Hsinchu to Taichung</sub>
+</p>
