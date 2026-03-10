@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/app/generated/prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 // Prisma 7 requires accelerateUrl or adapter.
 // DATABASE_URL should be a prisma:// Accelerate URL for production.
