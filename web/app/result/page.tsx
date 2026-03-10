@@ -3,64 +3,61 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Waves, Flame, TreePine, Landmark, Download, RotateCcw, Share2 } from "lucide-react";
+import { useJourney } from "@/lib/journey-context";
 
-const MOCK_DATA = {
-  nickname: "傳遞者",
-  stations: [
-    {
-      number: 1,
-      elements: ["風", "海"],
-      icon: Waves,
-      message: "流動讓我感受到自由",
-      theme: {
-        bg: "bg-[#4A90D9]/10",
-        border: "border-[#4A90D9]/25",
-        text: "text-[#4A90D9]/80",
-        icon: "text-[#4A90D9]",
-      },
+const STATION_META = [
+  {
+    number: 1,
+    elements: ["風", "海"],
+    icon: Waves,
+    theme: {
+      bg: "bg-[#4A90D9]/10",
+      border: "border-[#4A90D9]/25",
+      text: "text-[#4A90D9]/80",
+      icon: "text-[#4A90D9]",
     },
-    {
-      number: 2,
-      elements: ["火"],
-      icon: Flame,
-      message: "光照亮了我前行的路",
-      theme: {
-        bg: "bg-[#E87D3E]/10",
-        border: "border-[#E87D3E]/25",
-        text: "text-[#E87D3E]/80",
-        icon: "text-[#E87D3E]",
-      },
+  },
+  {
+    number: 2,
+    elements: ["火"],
+    icon: Flame,
+    theme: {
+      bg: "bg-[#E87D3E]/10",
+      border: "border-[#E87D3E]/25",
+      text: "text-[#E87D3E]/80",
+      icon: "text-[#E87D3E]",
     },
-    {
-      number: 3,
-      elements: ["土", "木"],
-      icon: TreePine,
-      message: "時間在這片土地留下的痕跡",
-      theme: {
-        bg: "bg-[#B8955A]/10",
-        border: "border-[#B8955A]/25",
-        text: "text-[#B8955A]/80",
-        icon: "text-[#B8955A]",
-      },
+  },
+  {
+    number: 3,
+    elements: ["土", "木"],
+    icon: TreePine,
+    theme: {
+      bg: "bg-[#B8955A]/10",
+      border: "border-[#B8955A]/25",
+      text: "text-[#B8955A]/80",
+      icon: "text-[#B8955A]",
     },
-    {
-      number: 4,
-      elements: ["金"],
-      icon: Landmark,
-      message: "這趟旅程帶給我的勇氣",
-      theme: {
-        bg: "bg-[#C9A84C]/10",
-        border: "border-[#C9A84C]/25",
-        text: "text-[#C9A84C]/80",
-        icon: "text-[#C9A84C]",
-      },
+  },
+  {
+    number: 4,
+    elements: ["金"],
+    icon: Landmark,
+    theme: {
+      bg: "bg-[#C9A84C]/10",
+      border: "border-[#C9A84C]/25",
+      text: "text-[#C9A84C]/80",
+      icon: "text-[#C9A84C]",
     },
-  ],
-};
+  },
+];
 
 export default function ResultPage() {
   const router = useRouter();
+  const { state, clearJourneyData } = useJourney();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const nickname = state?.nickname ?? "傳遞者";
 
   const handleDownload = async () => {
     setIsGenerating(true);
@@ -69,7 +66,8 @@ export default function ResultPage() {
     setIsGenerating(false);
   };
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    await clearJourneyData();
     router.push("/");
   };
 
@@ -87,12 +85,12 @@ export default function ResultPage() {
               旅程完成
             </h1>
             <p className="text-[#E8D5A3]/50 font-manuscript">
-              {MOCK_DATA.nickname}，你已傳遞所有元素
+              {nickname}，你已傳遞所有元素
             </p>
           </div>
         </header>
 
-        {/* Certificate Card - Parchment scroll */}
+        {/* Certificate Card */}
         <div className="scroll-border rounded-sm overflow-hidden animate-fade-up" style={{ animationDelay: "80ms" }}>
           <div className="bg-gradient-to-r from-[#1A1208] to-[#0D0D0D] p-5 text-center border-b border-[#C9A84C]/20">
             <div className="border-t border-[#C9A84C]/30 mb-3" />
@@ -104,25 +102,25 @@ export default function ResultPage() {
           </div>
 
           <div className="divide-y divide-[#C9A84C]/10">
-            {MOCK_DATA.stations.map((station) => {
-              const Icon = station.icon;
+            {STATION_META.map((meta) => {
+              const Icon = meta.icon;
+              const submission = state?.submissions[String(meta.number) as "1" | "2" | "3" | "4"];
+              const msg = submission?.message ?? "—";
+
               return (
-                <div
-                  key={station.number}
-                  className={`p-4 ${station.theme.bg}`}
-                >
+                <div key={meta.number} className={`p-4 ${meta.theme.bg}`}>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-10 h-10 rounded-sm border ${station.theme.border} bg-[#0D0D0D]/40 flex items-center justify-center ${station.theme.icon}`}>
+                    <div className={`w-10 h-10 rounded-sm border ${meta.theme.border} bg-[#0D0D0D]/40 flex items-center justify-center ${meta.theme.icon}`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className={`text-sm font-display tracking-wide ${station.theme.icon}`}>
-                        站 {station.number}｜{station.elements.join(" × ")}
+                      <p className={`text-sm font-display tracking-wide ${meta.theme.icon}`}>
+                        站 {meta.number}｜{meta.elements.join(" × ")}
                       </p>
                     </div>
                   </div>
-                  <p className={`text-sm pl-13 italic font-manuscript ${station.theme.text}`}>
-                    「{station.message}」
+                  <p className={`text-sm pl-13 italic font-manuscript ${meta.theme.text}`}>
+                    「{msg}」
                   </p>
                 </div>
               );

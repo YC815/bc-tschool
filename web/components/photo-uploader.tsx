@@ -1,24 +1,27 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { Camera, X } from "lucide-react";
+import { resizeAndEncodePhoto } from "@/lib/photo-utils";
 
 interface PhotoUploaderProps {
-  onPhotoSelect: (file: File | null, previewUrl: string | null) => void;
-  previewUrl?: string | null;
+  onPhotoSelect: (dataUrl: string | null) => void;
+  dataUrl?: string | null;
 }
 
-export function PhotoUploader({ onPhotoSelect, previewUrl }: PhotoUploaderProps) {
+export function PhotoUploader({ onPhotoSelect, dataUrl }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    if (file) {
-      const url = URL.createObjectURL(file);
-      onPhotoSelect(file, url);
-    }
+  const processFile = async (file: File) => {
+    const encoded = await resizeAndEncodePhoto(file);
+    onPhotoSelect(encoded);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await processFile(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -31,41 +34,32 @@ export function PhotoUploader({ onPhotoSelect, previewUrl }: PhotoUploaderProps)
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0] || null;
-    if (file && file.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file);
-      onPhotoSelect(file, url);
-    }
-  };
-
-  const handleClick = () => {
-    inputRef.current?.click();
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) await processFile(file);
   };
 
   const handleClear = () => {
-    onPhotoSelect(null, null);
-    if (inputRef.current) {
-      inputRef.current.value = "";
-    }
+    onPhotoSelect(null);
+    if (inputRef.current) inputRef.current.value = "";
   };
 
-  if (previewUrl) {
+  if (dataUrl) {
     return (
       <div className="relative w-full aspect-video rounded-sm overflow-hidden border border-[#C9A84C]/30 group">
-        {/* Corner decorations */}
         <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#C9A84C]/60 z-10" />
         <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-[#C9A84C]/60 z-10" />
         <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-[#C9A84C]/60 z-10" />
         <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#C9A84C]/60 z-10" />
 
         <Image
-          src={previewUrl}
+          src={dataUrl}
           alt="預覽"
           fill
           className="object-cover photo-aged"
+          unoptimized
         />
 
         <button
@@ -85,7 +79,7 @@ export function PhotoUploader({ onPhotoSelect, previewUrl }: PhotoUploaderProps)
 
   return (
     <div
-      onClick={handleClick}
+      onClick={() => inputRef.current?.click()}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -99,7 +93,6 @@ export function PhotoUploader({ onPhotoSelect, previewUrl }: PhotoUploaderProps)
         }
       `}
     >
-      {/* Corner decorations */}
       <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-[#C9A84C]/40" />
       <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-[#C9A84C]/40" />
       <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-[#C9A84C]/40" />

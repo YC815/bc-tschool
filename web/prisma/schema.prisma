@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
@@ -11,4 +8,23 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model Journey {
+  id          String              @id @default(cuid())
+  nickname    String
+  startedAt   DateTime            @default(now())
+  submissions StationSubmission[]
+}
+
+model StationSubmission {
+  id          String   @id @default(cuid())
+  stationId   Int
+  photoData   String?
+  message     String
+  submittedAt DateTime @default(now())
+  journeyId   String
+  journey     Journey  @relation(fields: [journeyId], references: [id])
+
+  @@unique([journeyId, stationId])
 }

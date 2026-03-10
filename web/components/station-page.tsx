@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { PhotoUploader } from "@/components/photo-uploader";
 import { StationData } from "@/lib/stations";
-import { Camera, Eye, Waves, Flame, TreePine, Landmark, Bike, CheckCircle2 } from "lucide-react";
+import { useJourney } from "@/lib/journey-context";
+import { Camera, Eye, Waves, Flame, TreePine, Landmark, Bike, CheckCircle2, FileText, User } from "lucide-react";
 
 interface StationPageProps {
   station: StationData;
@@ -20,27 +21,68 @@ const STATION_ICONS: Record<number, React.ComponentType<{ className?: string }>>
 
 export function StationPage({ station }: StationPageProps) {
   const router = useRouter();
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const { state, isLoaded, saveStationDraft, markSubmitted } = useJourney();
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePhotoSelect = (file: File | null, previewUrl: string | null) => {
-    setPhotoFile(file);
-    setPhotoPreview(previewUrl);
+  const stationId = String(station.number) as "1" | "2" | "3" | "4";
+
+  // Restore draft from IDB once loaded
+  useEffect(() => {
+    if (!isLoaded) return;
+    const draft = state?.submissions[stationId];
+    if (draft) {
+      startTransition(() => {
+        if (draft.photoDataUrl) setPhotoDataUrl(draft.photoDataUrl);
+        if (draft.message) setMessage(draft.message);
+      });
+    }
+  }, [isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handlePhotoSelect = async (dataUrl: string | null) => {
+    setPhotoDataUrl(dataUrl);
+    await saveStationDraft(stationId, { photoDataUrl: dataUrl });
+  };
+
+  const handleMessageChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setMessage(val);
+    await saveStationDraft(stationId, { message: val });
   };
 
   const handleSubmit = async () => {
-    if (!photoFile || !message.trim()) return;
-
+    if (!photoDataUrl || !message.trim()) return;
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    try {
+      await fetch("/api/journey/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stationId: station.number,
+          photoDataUrl,
+          message,
+          nickname: state?.nickname ?? "",
+        }),
+      });
+      await markSubmitted(stationId, Date.now());
+    } catch {
+      // Silent fail — data is already in IDB
+    }
+
     router.push(station.nextStation);
   };
 
-  const isComplete = photoFile && message.trim();
+  const isComplete = photoDataUrl && message.trim();
   const progressPercent = (station.number / 4) * 100;
   const StationIcon = STATION_ICONS[station.number] ?? Landmark;
+
+  const allSubmissions = Object.values(state?.submissions ?? {});
+  const photoCount = allSubmissions.filter((s) => s.photoDataUrl).length;
+  const textCount = allSubmissions.filter((s) => s.message.trim()).length;
+  const completedCount = allSubmissions.filter((s) => s.submittedAt).length;
+  const nickname = state?.nickname;
 
   return (
     <div className={`min-h-screen bg-gradient-to-b ${station.theme.gradient}`}>
@@ -52,7 +94,49 @@ export function StationPage({ station }: StationPageProps) {
         />
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
+      {/* Status Strip */}
+      <div className="fixed top-0.5 left-0 right-0 z-40 flex items-center justify-between px-4 py-2 bg-[#0D0D0D]/80 backdrop-blur-sm border-b border-[#C9A84C]/10">
+        {/* Nickname */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <User className="w-3 h-3 text-[#C9A84C]/60 flex-shrink-0" />
+          <span className="text-xs font-display text-[#E8D5A3]/70 truncate max-w-[90px]">
+            {nickname ?? "旅者"}
+          </span>
+        </div>
+
+        {/* Station Progress */}
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4].map((n) => (
+            <div
+              key={n}
+              className={`w-5 h-1 rounded-full transition-all duration-500 ${
+                n < station.number
+                  ? "bg-[#C9A84C]"
+                  : n === station.number
+                    ? "bg-[#C9A84C]/60"
+                    : "bg-[#C9A84C]/15"
+              }`}
+            />
+          ))}
+          <span className="text-xs font-display text-[#C9A84C]/60 ml-1 tabular-nums">
+            {completedCount}/4
+          </span>
+        </div>
+
+        {/* Material Counts */}
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1 text-xs font-manuscript text-[#E8D5A3]/50">
+            <Camera className="w-3 h-3 text-[#C9A84C]/50" />
+            <span className="tabular-nums text-[#C9A84C]/80">{photoCount}</span>
+          </span>
+          <span className="flex items-center gap-1 text-xs font-manuscript text-[#E8D5A3]/50">
+            <FileText className="w-3 h-3 text-[#C9A84C]/50" />
+            <span className="tabular-nums text-[#C9A84C]/80">{textCount}</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 pt-16 pb-8 space-y-6">
         {/* Header */}
         <header className="text-center space-y-3 pt-4">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#C9A84C]/10 border border-[#C9A84C]/20">
@@ -72,7 +156,7 @@ export function StationPage({ station }: StationPageProps) {
           </div>
         </header>
 
-        {/* Guide Card - Scroll style */}
+        {/* Guide Card */}
         <div className="scroll-border rounded-sm p-5 space-y-4 animate-fade-up" style={{ animationDelay: "80ms" }}>
           <div className="border-t border-[#C9A84C]/20" />
           <div className="flex items-center gap-2 text-[#C9A84C] font-display tracking-wider text-sm">
@@ -92,12 +176,11 @@ export function StationPage({ station }: StationPageProps) {
           <div className="border-b border-[#C9A84C]/20" />
         </div>
 
-        {/* Task Card - Commission letter */}
+        {/* Task Card */}
         <div
           className={`relative scroll-border rounded-sm p-5 ${station.theme.cardAccent} animate-fade-up`}
           style={{ animationDelay: "160ms" }}
         >
-          {/* Watermark */}
           <div className="absolute top-2 right-3 font-display text-xs tracking-widest text-[#C9A84C]/10 select-none">
             委託
           </div>
@@ -126,7 +209,7 @@ export function StationPage({ station }: StationPageProps) {
 
           <PhotoUploader
             onPhotoSelect={handlePhotoSelect}
-            previewUrl={photoPreview}
+            dataUrl={photoDataUrl}
           />
 
           <div className="space-y-2">
@@ -138,7 +221,7 @@ export function StationPage({ station }: StationPageProps) {
               <Textarea
                 placeholder={`${station.prompt}＿＿＿＿。`}
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={handleMessageChange}
                 className="min-h-[100px] resize-none border-[#C9A84C]/20 focus-visible:ring-[#C9A84C]/30 text-[#E8D5A3] placeholder:text-[#C9A84C]/30 font-manuscript"
                 style={{
                   backgroundImage: "repeating-linear-gradient(transparent, transparent 27px, rgba(201, 168, 76, 0.06) 27px, rgba(201, 168, 76, 0.06) 28px)",

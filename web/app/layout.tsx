@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cinzel, Noto_Serif_TC, EB_Garamond } from "next/font/google";
+import { JourneyProvider } from "@/lib/journey-context";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -36,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="zh-TW" className={`${cinzel.variable} ${notoSerifTC.variable} ${ebGaramond.variable}`}>
       <body className="antialiased min-h-screen bg-background font-manuscript">
-        {children}
+        <JourneyProvider>{children}</JourneyProvider>
       </body>
     </html>
   );
