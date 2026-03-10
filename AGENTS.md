@@ -89,6 +89,56 @@ import { useGameState } from '../hooks/use-game-state';
   - 技術架構.md        # 技術規格文件
 ```
 
+## 開發順序（MVP 優先）
+
+### Phase 1: UI 原型（無資料庫）
+1. **首頁** - 遊戲入口、暱稱輸入
+2. **站點頁面** - 四站 UI（指引 + 上傳 + 文字輸入）
+3. **成果頁** - 紀念卡片預覽
+4. **照片上傳元件** - 使用本地模擬（不實際上傳）
+
+### Phase 2: 資料庫串接
+5. **Prisma Schema** - 建立資料表
+6. **API Routes** - 玩家建立、進度儲存、照片上傳
+7. **資料持久化** - 串接真實上傳與資料庫
+
+### Phase 3: 優化與部署
+8. **動畫與互動** - 提升使用者體驗
+9. **測試與除錯** - 多裝置測試
+10. **部署上線** - Zeabur 部署
+
+## 已安裝 Skills
+
+本專案已安裝以下 skills，可在對話中直接調用：
+
+### 1. ui-ux-pro-max
+**來源：** nextlevelbuilder/ui-ux-pro-max-skill  
+**使用場景：**
+- 需要完整設計系統規劃（配色、字體、風格）
+- 設計新頁面或元件前，先產生設計規範
+- 檢查 UI/UX 是否符合最佳實踐
+- 需要特定風格（glassmorphism、minimalism、dark mode 等）
+- **關鍵指令：** `python3 .agents/skills/ui-ux-pro-max/scripts/search.py "<描述>" --design-system`
+
+### 2. frontend-design (Anthropic)
+**來源：** anthropic/claude-code/plugins/frontend-design  
+**使用場景：**
+- 創建獨特、高品質的前端介面
+- 避免「AI 感」的通用設計
+- 需要大膽的視覺風格（brutalist、maximalist、retro-futuristic 等）
+- 設計令人印象深刻的 landing page 或互動效果
+- **特點：** 強調獨特字體、創意配色、精緻動畫
+
+### 3. ui-styling (claudekit)
+**來源：** mrgoonie/claudekit-skills/ui-styling  
+**使用場景：**
+- 使用 shadcn/ui 元件庫開發
+- Tailwind CSS 樣式設計與客製化
+- 建立響應式佈局
+- 實作 dark mode 主題切換
+- 需要無障礙（a11y）元件（dialog、form、dropdown 等）
+- **參考文件：** `.agents/skills/ui-styling/references/`
+
 ## 注意事項
 
 1. 專案已初始化於 `web/` 目錄
@@ -97,3 +147,4 @@ import { useGameState } from '../hooks/use-game-state';
 4. 遊戲核心：四站打卡（香山、通霄、大甲、台中舊車站）
 5. 每站任務：一張照片 + 一句話
 6. 終點生成專屬紀念圖片
+7. **目前階段**：Phase 1 - 先完成 UI 原型，介面確認後再串資料庫
