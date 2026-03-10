@@ -12,9 +12,13 @@ export interface StationData {
   };
   guide: string[];
   task: string;
-  prompt: string;
+  prompt?: string;
   nextStation: string;
   isFinal?: boolean;
+  departureMessage?: string;
+  envelopeNarrative?: string;
+  minLength?: number;
+  maxLength?: number;
 }
 
 export const STATIONS: Record<string, StationData> = {
@@ -31,13 +35,14 @@ export const STATIONS: Record<string, StationData> = {
       cardAccentTitle: "text-[#4A90D9]",
     },
     guide: [
-      "抬頭：找一支「正在轉動的風車」。",
-      "聽：站在海邊聽 10 秒風聲或浪聲。",
-      "看：找一條由風或海「推動」的線（旗、浪、電塔線影、草）。",
+      "抓出隱形的風！",
+      "找任何「被風推動」的東西——旗、草、浪、電塔線影。",
+      "對準它，按下快門。",
     ],
-    task: "騎行時，只要看到「被推動」的東西，就在心裡記住。",
-    prompt: "記錄這趟旅途中，流動讓我",
+    task: "騎上路，把手機收起來。用眼睛繼續找風。",
     nextStation: "/station/2",
+    departureMessage: "手機收起，用心感受路上的風吧！下一站見。",
+    envelopeNarrative: "站一的元素是風與海——流動本身。",
   },
   "2": {
     number: 2,
@@ -52,12 +57,13 @@ export const STATIONS: Record<string, StationData> = {
       cardAccentTitle: "text-[#E87D3E]",
     },
     guide: [
-      "伸手感受太陽的熱（至少 10 秒）。",
-      "看地面：尋找影子最短的瞬間。",
+      "尋找火焰的替身！",
+      "☀️ 晴天：找被曬熱的表面（石頭、柏油、鐵欄杆），手背感受 3 秒。",
+      "🌧 陰雨天：找任何讓你聯想到「暖」或「火」的顏色或畫面。",
     ],
-    task: "觀察一路上「光在哪裡最強」。",
-    prompt: "光照亮了我前行的路，那一刻",
+    task: "任何天氣：拍下此刻讓你感覺「暖」的那個畫面。",
     nextStation: "/station/3",
+    departureMessage: "手機收起，用心感受路上的火吧！下一站見。",
   },
   "3": {
     number: 3,
@@ -72,13 +78,13 @@ export const STATIONS: Record<string, StationData> = {
       cardAccentTitle: "text-[#B8955A]",
     },
     guide: [
-      "今天第一個讓你喘的坡，停下來 10 秒。",
-      "記住坡頂看到的第一樣東西。",
-      "到鎮瀾宮找「最老的木紋」。",
+      "尋找阿公級的痕跡！",
+      "在廣場找一樣最有年紀的東西——老木柱、龜裂石板、磨光門檻。",
+      "靠近它，拍下那道歲月留下的紋路。",
     ],
-    task: "留意所有木頭：老屋、門框、神轎、樑柱、木椅。",
-    prompt: "時間在這片土地留下的痕跡，讓我",
+    task: "路上留意舊的東西：老屋、老樹、老招牌。",
     nextStation: "/station/4",
+    departureMessage: "手機收起，繼續感受土地的厚度。終點見！",
   },
   "4": {
     number: 4,
@@ -93,14 +99,18 @@ export const STATIONS: Record<string, StationData> = {
       cardAccentTitle: "text-[#C9A84C]",
     },
     guide: [
-      "坐下來，深呼吸三次。",
-      "打開相簿：從前三站挑出一張最喜歡的照片。",
-      "寫一句話：「這趟旅程帶給我的＿＿＿＿。」",
+      "在你出發之前，有人寫了一封信交給你。",
+      "現在，你已到達終點。",
+      "是時候打開它了。",
     ],
-    task: "這是終點，也是回望整趟旅程的時刻。",
-    prompt: "這趟旅程帶給我的",
+    task: "坐下來，深呼吸三次。打開這封信，回望整趟旅程。",
+    prompt: "這趟旅程最讓我難忘的是",
     nextStation: "/result",
     isFinal: true,
+    envelopeNarrative:
+      "你騎過了風、穿過了火、踏過了土木，如今以金收束。這封信等了你整整一天。",
+    minLength: 50,
+    maxLength: 100,
   },
 };
 

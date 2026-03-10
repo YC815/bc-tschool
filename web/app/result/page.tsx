@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Waves, Flame, TreePine, Landmark, Download, RotateCcw, Share2 } from "lucide-react";
+import { Waves, Flame, TreePine, Landmark, RotateCcw, Share2 } from "lucide-react";
 import { useJourney } from "@/lib/journey-context";
+import { MemorialGenerator } from "@/components/memorial-generator";
 
 const STATION_META = [
   {
@@ -55,16 +55,8 @@ const STATION_META = [
 export default function ResultPage() {
   const router = useRouter();
   const { state, clearJourneyData } = useJourney();
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const nickname = state?.nickname ?? "傳遞者";
-
-  const handleDownload = async () => {
-    setIsGenerating(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert("紀念卡片已生成！（Phase 2 將支援下載）");
-    setIsGenerating(false);
-  };
 
   const handleRestart = async () => {
     await clearJourneyData();
@@ -149,17 +141,13 @@ export default function ResultPage() {
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="space-y-3 pt-4 animate-fade-up" style={{ animationDelay: "240ms" }}>
-          <button
-            className="w-full h-12 rounded-sm bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display tracking-wider btn-rpg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            onClick={handleDownload}
-            disabled={isGenerating}
-          >
-            <Download className="w-4 h-4" />
-            {isGenerating ? "生成中..." : "下載紀念卡片"}
-          </button>
+        {/* Memorial Generator */}
+        <div className="scroll-border rounded-sm bg-[#1A1208]/60 p-5 animate-fade-up" style={{ animationDelay: "240ms" }}>
+          <MemorialGenerator />
+        </div>
 
+        {/* Actions */}
+        <div className="space-y-3 pt-2 animate-fade-up" style={{ animationDelay: "320ms" }}>
           <button
             className="w-full h-12 rounded-sm border border-[#C9A84C]/30 text-[#C9A84C]/80 font-display tracking-wider btn-rpg hover:border-[#C9A84C]/50 hover:bg-[#C9A84C]/5 flex items-center justify-center gap-2"
             onClick={handleRestart}

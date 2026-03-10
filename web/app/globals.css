@@ -100,6 +100,16 @@
   50%       { box-shadow: 0 0 20px 6px rgba(201, 168, 76, 0.6); }
 }
 
+@keyframes envelope-flap-open {
+  0%   { transform: rotateX(0deg); }
+  100% { transform: rotateX(-180deg); }
+}
+
+@keyframes letter-rise {
+  0%   { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
 @layer utilities {
   .animate-fade-up {
     animation: fade-up-in 0.45s ease both;
@@ -145,5 +155,38 @@
 
   .btn-rpg:active {
     transform: scale(0.97);
+  }
+
+  /* Envelope animation */
+  .envelope-wrapper {
+    perspective: 800px;
+  }
+
+  .envelope-body {
+    position: relative;
+    overflow: visible;
+  }
+
+  .envelope-flap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: linear-gradient(to bottom, #2A1E0A, #1A1208);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.25);
+    transform-origin: top center;
+    transform-style: preserve-3d;
+    z-index: 2;
+    border-radius: 2px 2px 0 0;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+  }
+
+  .envelope-open .envelope-flap {
+    animation: envelope-flap-open 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+  }
+
+  .envelope-letter {
+    padding-top: 8px;
   }
 }
