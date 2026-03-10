@@ -110,9 +110,18 @@
   100% { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes dialogue-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @layer utilities {
   .animate-fade-up {
     animation: fade-up-in 0.45s ease both;
+  }
+
+  .animate-dialogue {
+    animation: dialogue-appear 0.25s ease both;
   }
 
   .animate-stamp {
@@ -177,6 +186,7 @@
     border-bottom: 1px solid rgba(201, 168, 76, 0.25);
     transform-origin: top center;
     transform-style: preserve-3d;
+    backface-visibility: hidden;
     z-index: 2;
     border-radius: 2px 2px 0 0;
     clip-path: polygon(0 0, 100% 0, 50% 100%);

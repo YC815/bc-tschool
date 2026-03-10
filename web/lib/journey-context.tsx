@@ -26,6 +26,7 @@ interface JourneyContextValue {
   ) => Promise<void>;
   markSubmitted: (stationId: string, ts: number) => Promise<void>;
   clearJourneyData: () => Promise<void>;
+  setIntroSeen: () => Promise<void>;
 }
 
 const JourneyContext = createContext<JourneyContextValue | null>(null);
@@ -118,6 +119,13 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
     await clearJourney();
   }, []);
 
+  const setIntroSeen = useCallback(async () => {
+    const base = state ?? { nickname: "", submissions: {}, startedAt: Date.now() };
+    const updated = { ...base, introSeen: true };
+    setState(updated);
+    await saveJourney(updated);
+  }, [state]);
+
   return (
     <JourneyContext.Provider
       value={{
@@ -127,6 +135,7 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
         saveStationDraft,
         markSubmitted,
         clearJourneyData,
+        setIntroSeen,
       }}
     >
       {children}

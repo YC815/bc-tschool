@@ -42,6 +42,8 @@ function charCountColor(len: number): string {
   return "text-red-400/80";
 }
 
+type FinalPhase = "upload" | "reveal" | "write";
+
 export function StationPage({ station }: StationPageProps) {
   const router = useRouter();
   const { state, isLoaded, saveStationDraft, markSubmitted, clearJourneyData } = useJourney();
@@ -52,9 +54,10 @@ export function StationPage({ station }: StationPageProps) {
   const [confirmStep, setConfirmStep] = useState(0);
   const [isDeparting, setIsDeparting] = useState(false);
   const [envelopeOpen, setEnvelopeOpen] = useState(false);
+  const [finalPhase, setFinalPhase] = useState<FinalPhase>("upload");
+  const [revealIndex, setRevealIndex] = useState(0);
 
   const stationId = String(station.number) as "1" | "2" | "3" | "4";
-  const minLen = station.minLength ?? 0;
   const maxLen = station.maxLength ?? 100;
 
   // Restore draft from IDB once loaded
@@ -69,12 +72,12 @@ export function StationPage({ station }: StationPageProps) {
     }
   }, [isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Envelope open animation (station 4 only)
+  // Envelope open animation (station 4 only, upload phase)
   useEffect(() => {
-    if (!station.isFinal) return;
+    if (!station.isFinal || finalPhase !== "upload") return;
     const t = setTimeout(() => setEnvelopeOpen(true), 600);
     return () => clearTimeout(t);
-  }, [station.isFinal]);
+  }, [station.isFinal, finalPhase]);
 
   const handlePhotoSelect = async (dataUrl: string | null) => {
     setPhotoDataUrl(dataUrl);
@@ -90,8 +93,55 @@ export function StationPage({ station }: StationPageProps) {
 
   const handleSubmit = async () => {
     if (!photoDataUrl) return;
-    if (station.isFinal && (message.length < minLen || message.length > maxLen)) return;
 
+    // Station 4, upload phase: submit photo, then enter reveal
+    if (station.isFinal && finalPhase === "upload") {
+      setIsSubmitting(true);
+      try {
+        await fetch("/api/journey/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stationId: station.number,
+            photoDataUrl,
+            message: "",
+            nickname: state?.nickname ?? "",
+          }),
+        });
+        await markSubmitted(stationId, Date.now());
+      } catch {
+        // Silent fail
+      }
+      setIsSubmitting(false);
+      setFinalPhase("reveal");
+      return;
+    }
+
+    // Station 4, write phase: upsert with message, then go to result
+    if (station.isFinal && finalPhase === "write") {
+      if (message.length > maxLen) return;
+      setIsSubmitting(true);
+      try {
+        await saveStationDraft(stationId, { message });
+        await fetch("/api/journey/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stationId: station.number,
+            photoDataUrl,
+            message,
+            nickname: state?.nickname ?? "",
+          }),
+        });
+      } catch {
+        // Silent fail
+      }
+      setIsSubmitting(false);
+      router.push(station.nextStation);
+      return;
+    }
+
+    // Non-final stations
     setIsSubmitting(true);
     try {
       await fetch("/api/journey/submit", {
@@ -100,21 +150,16 @@ export function StationPage({ station }: StationPageProps) {
         body: JSON.stringify({
           stationId: station.number,
           photoDataUrl,
-          message: station.isFinal ? message : "",
+          message: "",
           nickname: state?.nickname ?? "",
         }),
       });
       await markSubmitted(stationId, Date.now());
     } catch {
-      // Silent fail — data is already in IDB
+      // Silent fail
     }
     setIsSubmitting(false);
-
-    if (station.isFinal) {
-      router.push(station.nextStation);
-    } else {
-      setIsDeparting(true);
-    }
+    setIsDeparting(true);
   };
 
   const handleLogout = async () => {
@@ -122,10 +167,13 @@ export function StationPage({ station }: StationPageProps) {
     router.push("/");
   };
 
-  const isFinalComplete =
-    !!photoDataUrl && message.length >= minLen && message.length <= maxLen;
-  const isNonFinalComplete = !!photoDataUrl;
-  const isComplete = station.isFinal ? isFinalComplete : isNonFinalComplete;
+  const isComplete = station.isFinal
+    ? finalPhase === "upload"
+      ? !!photoDataUrl
+      : finalPhase === "write"
+        ? message.length > 0 && message.length <= maxLen
+        : false
+    : !!photoDataUrl;
 
   const progressPercent = (station.number / 4) * 100;
   const StationIcon = STATION_ICONS[station.number] ?? Landmark;
@@ -283,6 +331,63 @@ export function StationPage({ station }: StationPageProps) {
           </div>
         </div>
       )}
+
+      {/* ── Station 4 Reveal Overlay ── */}
+      {station.isFinal && finalPhase === "reveal" && (() => {
+        const revealDialogues = station.revealDialogues ?? [];
+        return (
+          <div className="fixed inset-0 z-[60] flex items-end justify-center px-4 pb-8">
+            <div className="absolute inset-0 bg-[#0D0D0D]/92 backdrop-blur-sm" />
+            <div
+              className="relative w-full max-w-sm scroll-border rounded-sm bg-[#0D0D0D]/95 overflow-hidden animate-dialogue"
+              key={revealIndex}
+              onClick={() => {
+                if (revealIndex < revealDialogues.length) {
+                  setRevealIndex((v) => v + 1);
+                }
+              }}
+            >
+              <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
+              <div className="p-5 min-h-[100px] space-y-3">
+                {revealIndex < revealDialogues.length ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]" />
+                      <span className="text-xs font-display text-[#C9A84C]/70 tracking-wider">旁白</span>
+                    </div>
+                    <p className="font-manuscript text-[#E8D5A3]/90 leading-relaxed text-base">
+                      {revealDialogues[revealIndex]}
+                    </p>
+                    <div className="flex justify-end">
+                      <div className="flex items-center gap-1.5 text-[#C9A84C]/40 text-xs font-manuscript">
+                        <span>點擊繼續</span>
+                        <span className="inline-block w-2 h-2 border-r-2 border-b-2 border-[#C9A84C]/40 rotate-45 mb-0.5" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#4A90D9]" />
+                      <span className="text-xs font-display text-[#4A90D9] tracking-wider">風之使者</span>
+                    </div>
+                    <p className="font-manuscript text-[#E8D5A3]/90 leading-relaxed text-base">
+                      {station.messengerReveal}
+                    </p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFinalPhase("write"); }}
+                      className="w-full h-11 mt-2 rounded-sm bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display tracking-wider btn-rpg text-sm"
+                    >
+                      留下你的話
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/20 to-transparent" />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Departure Dialog (stations 1-3) ── */}
       {isDeparting && (
@@ -446,21 +551,15 @@ export function StationPage({ station }: StationPageProps) {
             <span>{station.isFinal ? "最終回報" : "此站回報"}</span>
           </div>
 
-          <PhotoUploader
-            onPhotoSelect={handlePhotoSelect}
-            dataUrl={photoDataUrl}
-          />
-
-          {/* Text input: station 4 only */}
-          {station.isFinal && (
-            <div className="space-y-2">
-              <label className="text-sm font-manuscript text-[#E8D5A3]/60 flex items-center gap-2">
-                一句話金句
-                <span className="text-[#C9A84C]/50 text-xs">（{minLen}–{maxLen} 字）</span>
+          {/* Station 4 write phase: textarea only */}
+          {station.isFinal && finalPhase === "write" ? (
+            <div className="space-y-2 animate-fade-up">
+              <label className="text-sm font-manuscript text-[#E8D5A3]/60">
+                {station.prompt ?? "走完這段路，我想說的是"}
               </label>
               <div className="relative">
                 <Textarea
-                  placeholder={`${station.prompt ?? "這趟旅程最讓我難忘的是"}＿＿＿＿。`}
+                  placeholder="走完這段路，我想說的是..."
                   value={message}
                   onChange={handleMessageChange}
                   className="min-h-[120px] resize-none border-[#C9A84C]/20 focus-visible:ring-[#C9A84C]/30 text-[#E8D5A3] placeholder:text-[#C9A84C]/30 font-manuscript"
@@ -474,14 +573,14 @@ export function StationPage({ station }: StationPageProps) {
                   className={`absolute bottom-2 right-2 text-xs tabular-nums transition-colors duration-200 ${charCountColor(message.length)}`}
                 >
                   {message.length}/{maxLen}
-                  {message.length < minLen && message.length > 0 && (
-                    <span className="ml-1 text-[10px] text-amber-400/60">
-                      （至少 {minLen} 字）
-                    </span>
-                  )}
                 </div>
               </div>
             </div>
+          ) : (
+            <PhotoUploader
+              onPhotoSelect={handlePhotoSelect}
+              dataUrl={photoDataUrl}
+            />
           )}
 
           <button
@@ -491,9 +590,11 @@ export function StationPage({ station }: StationPageProps) {
           >
             {isSubmitting
               ? "儲存中..."
-              : station.isFinal
+              : station.isFinal && finalPhase === "write"
                 ? "完成旅程，生成專屬紀念"
-                : "完成，前往下一站"
+                : station.isFinal
+                  ? "完成"
+                  : "完成，前往下一站"
             }
           </button>
           <div className="border-b border-[#C9A84C]/20" />

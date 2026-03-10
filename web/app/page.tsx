@@ -51,7 +51,8 @@ export default function Home() {
     setIsLoading(true);
     await setNickname(nickname.trim());
     await new Promise(resolve => setTimeout(resolve, 500));
-    router.push("/station/1");
+    const target = state?.introSeen ? "/station/1" : "/intro";
+    router.push(target);
   };
 
   const handleContinue = () => {

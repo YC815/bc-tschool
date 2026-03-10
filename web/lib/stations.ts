@@ -19,6 +19,8 @@ export interface StationData {
   envelopeNarrative?: string;
   minLength?: number;
   maxLength?: number;
+  revealDialogues?: string[];
+  messengerReveal?: string;
 }
 
 export const STATIONS: Record<string, StationData> = {
@@ -104,13 +106,19 @@ export const STATIONS: Record<string, StationData> = {
       "是時候打開它了。",
     ],
     task: "坐下來，深呼吸三次。打開這封信，回望整趟旅程。",
-    prompt: "這趟旅程最讓我難忘的是",
+    prompt: "走完這段路，我想說的是",
     nextStation: "/result",
     isFinal: true,
     envelopeNarrative:
       "你騎過了風、穿過了火、踏過了土木，如今以金收束。這封信等了你整整一天。",
-    minLength: 50,
-    maxLength: 100,
+    maxLength: 150,
+    revealDialogues: [
+      "你小心地撕開信封封口。",
+      "裡面......",
+      "是空白的。",
+    ],
+    messengerReveal:
+      "原來，想要你實際走過這段路，用雙腳、雙眼深深感受——那才是真正的訊息。",
   },
 };
 
