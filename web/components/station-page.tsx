@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PhotoUploader } from "@/components/photo-uploader";
 import { StationData } from "@/lib/stations";
 import { useJourney } from "@/lib/journey-context";
-import { Camera, Eye, Waves, Flame, TreePine, Landmark, Bike, CheckCircle2, FileText, User } from "lucide-react";
+import { Camera, Eye, Waves, Flame, TreePine, Landmark, Bike, CheckCircle2, FileText, User, LogOut, X, AlertTriangle, Skull } from "lucide-react";
 
 interface StationPageProps {
   station: StationData;
@@ -21,10 +21,12 @@ const STATION_ICONS: Record<number, React.ComponentType<{ className?: string }>>
 
 export function StationPage({ station }: StationPageProps) {
   const router = useRouter();
-  const { state, isLoaded, saveStationDraft, markSubmitted } = useJourney();
+  const { state, isLoaded, saveStationDraft, markSubmitted, clearJourneyData } = useJourney();
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmStep, setConfirmStep] = useState(0);
 
   const stationId = String(station.number) as "1" | "2" | "3" | "4";
 
@@ -74,6 +76,11 @@ export function StationPage({ station }: StationPageProps) {
     router.push(station.nextStation);
   };
 
+  const handleLogout = async () => {
+    await clearJourneyData();
+    router.push("/");
+  };
+
   const isComplete = photoDataUrl && message.trim();
   const progressPercent = (station.number / 4) * 100;
   const StationIcon = STATION_ICONS[station.number] ?? Landmark;
@@ -96,12 +103,41 @@ export function StationPage({ station }: StationPageProps) {
 
       {/* Status Strip */}
       <div className="fixed top-0.5 left-0 right-0 z-40 flex items-center justify-between px-4 py-2 bg-[#0D0D0D]/80 backdrop-blur-sm border-b border-[#C9A84C]/10">
-        {/* Nickname */}
-        <div className="flex items-center gap-1.5 min-w-0">
-          <User className="w-3 h-3 text-[#C9A84C]/60 flex-shrink-0" />
-          <span className="text-xs font-display text-[#E8D5A3]/70 truncate max-w-[90px]">
-            {nickname ?? "旅者"}
-          </span>
+        {/* Nickname — clickable for menu */}
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex items-center gap-1.5 min-w-0 group active:scale-95 transition-transform duration-150"
+          >
+            <User className="w-3 h-3 text-[#C9A84C]/60 flex-shrink-0 group-hover:text-[#C9A84C] transition-colors" />
+            <span className="text-xs font-display text-[#E8D5A3]/70 truncate max-w-[90px] group-hover:text-[#E8D5A3] transition-colors">
+              {nickname ?? "旅者"}
+            </span>
+          </button>
+
+          {/* Dropdown Menu */}
+          {menuOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-50"
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="absolute top-full left-0 mt-2 z-50 min-w-[140px] rounded-sm border border-[#C9A84C]/20 bg-[#0D0D0D]/95 backdrop-blur-sm shadow-[0_4px_24px_rgba(0,0,0,0.6)] overflow-hidden">
+                <div className="px-3 py-2 border-b border-[#C9A84C]/10">
+                  <p className="text-[10px] font-display text-[#C9A84C]/40 tracking-widest uppercase">旅者</p>
+                  <p className="text-xs font-display text-[#E8D5A3]/80 mt-0.5 truncate">{nickname ?? "—"}</p>
+                </div>
+                <button
+                  onClick={() => { setMenuOpen(false); setConfirmStep(1); }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-manuscript text-red-400/80 hover:text-red-300 hover:bg-red-950/30 transition-colors duration-150"
+                >
+                  <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>捨棄旅程</span>
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Station Progress */}
@@ -135,6 +171,93 @@ export function StationPage({ station }: StationPageProps) {
           </span>
         </div>
       </div>
+
+      {/* ── Confirmation Modals ── */}
+      {confirmStep > 0 && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-[#0D0D0D]/90 backdrop-blur-sm" />
+
+          <div className="relative w-full max-w-sm rounded-sm border border-[#C9A84C]/20 bg-[#1A1208] shadow-[0_8px_48px_rgba(0,0,0,0.8)] overflow-hidden">
+            {/* Top accent */}
+            <div className="h-0.5 bg-gradient-to-r from-transparent via-red-800/60 to-transparent" />
+
+            <div className="p-6 space-y-5">
+              {/* Icon + Step */}
+              <div className="flex flex-col items-center gap-3">
+                {confirmStep === 1 && <AlertTriangle className="w-8 h-8 text-amber-500/80" />}
+                {confirmStep === 2 && <AlertTriangle className="w-8 h-8 text-red-500/80" />}
+                {confirmStep === 3 && <Skull className="w-8 h-8 text-red-600" />}
+                <p className="text-[10px] font-display tracking-[0.3em] text-[#C9A84C]/30 uppercase">
+                  確認 {confirmStep} / 3
+                </p>
+              </div>
+
+              {/* Title */}
+              <div className="text-center space-y-2">
+                {confirmStep === 1 && (
+                  <>
+                    <h2 className="font-display text-lg text-[#E8D5A3] tracking-wide">捨棄這趟旅程？</h2>
+                    <p className="text-sm font-manuscript text-[#E8D5A3]/50 leading-relaxed">
+                      所有照片與紀錄將永久消失，<br />無法復原。
+                    </p>
+                  </>
+                )}
+                {confirmStep === 2 && (
+                  <>
+                    <h2 className="font-display text-lg text-red-400/90 tracking-wide">這個動作無法復原</h2>
+                    <p className="text-sm font-manuscript text-[#E8D5A3]/50 leading-relaxed">
+                      你已走過 <span className="text-[#C9A84C]">{completedCount} 站</span>，<br />
+                      確定放棄所有已完成的記錄？
+                    </p>
+                  </>
+                )}
+                {confirmStep === 3 && (
+                  <>
+                    <h2 className="font-display text-lg text-red-500 tracking-wide">最終確認</h2>
+                    <p className="text-sm font-manuscript text-[#E8D5A3]/50 leading-relaxed">
+                      資料將於此刻永久刪除。<br />
+                      旅程記憶不留分毫。
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmStep(0)}
+                  className="flex-1 h-11 rounded-sm border border-[#C9A84C]/20 text-sm font-display text-[#E8D5A3]/60 hover:text-[#E8D5A3] hover:border-[#C9A84C]/40 transition-colors duration-150 active:scale-95"
+                >
+                  <span className="flex items-center justify-center gap-1.5">
+                    <X className="w-3.5 h-3.5" />
+                    取消
+                  </span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirmStep < 3) {
+                      setConfirmStep((s) => s + 1);
+                    } else {
+                      handleLogout();
+                    }
+                  }}
+                  className={`flex-1 h-11 rounded-sm text-sm font-display tracking-wide transition-all duration-150 active:scale-95 ${
+                    confirmStep === 3
+                      ? "bg-red-900/80 border border-red-700/50 text-red-200 hover:bg-red-800/80"
+                      : "bg-red-950/60 border border-red-800/30 text-red-300/80 hover:text-red-200"
+                  }`}
+                >
+                  {confirmStep < 3 ? "仍要捨棄" : "永久刪除"}
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom accent */}
+            <div className="h-0.5 bg-gradient-to-r from-transparent via-red-900/40 to-transparent" />
+          </div>
+        </div>
+      )}
 
       <div className="max-w-lg mx-auto px-4 pt-16 pb-8 space-y-6">
         {/* Header */}
