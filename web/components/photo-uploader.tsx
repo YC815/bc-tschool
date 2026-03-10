@@ -71,7 +71,7 @@ export function PhotoUploader({ onPhotoSelect, dataUrl }: PhotoUploaderProps) {
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 z-10">
-          <p className="text-[#C9A84C] text-xs font-display tracking-widest">證物已封存</p>
+          <p className="text-[#C9A84C] text-xs font-display tracking-widest">足跡已留存</p>
         </div>
       </div>
     );
@@ -107,7 +107,7 @@ export function PhotoUploader({ onPhotoSelect, dataUrl }: PhotoUploaderProps) {
 
       <div className="text-center space-y-1">
         <p className="text-sm text-[#E8D5A3]/70 font-manuscript">
-          點擊上傳證物照片
+          點擊上傳足跡照片
         </p>
         <p className="text-xs text-[#E8D5A3]/30 font-manuscript">
           放入物品欄 · JPG / PNG

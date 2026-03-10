@@ -22,6 +22,7 @@ import {
   Wind,
   Mail,
   Sword,
+  MapPin,
 } from "lucide-react";
 
 interface StationPageProps {
@@ -53,6 +54,8 @@ export function StationPage({ station }: StationPageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmStep, setConfirmStep] = useState(0);
   const [isDeparting, setIsDeparting] = useState(false);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [showReadyDialog, setShowReadyDialog] = useState(false);
   const [envelopeOpen, setEnvelopeOpen] = useState(false);
   const [finalPhase, setFinalPhase] = useState<FinalPhase>("upload");
   const [revealIndex, setRevealIndex] = useState(0);
@@ -68,6 +71,8 @@ export function StationPage({ station }: StationPageProps) {
       startTransition(() => {
         if (draft.photoDataUrl) setPhotoDataUrl(draft.photoDataUrl);
         if (draft.message) setMessage(draft.message);
+        // Skip location gate if station already completed
+        if (draft.submittedAt) setLocationConfirmed(true);
       });
     }
   }, [isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -389,6 +394,70 @@ export function StationPage({ station }: StationPageProps) {
         );
       })()}
 
+      {/* ── Location Confirmation Gate ── */}
+      {!locationConfirmed && (
+        <>
+          {/* Ready dialog */}
+          {showReadyDialog && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
+              <div className="absolute inset-0 bg-[#0D0D0D]/85 backdrop-blur-sm" />
+              <div className="relative w-full max-w-sm rounded-sm border border-[#C9A84C]/30 bg-[#1A1208] shadow-[0_8px_48px_rgba(0,0,0,0.8)] overflow-hidden animate-fade-up">
+                <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
+                <div className="p-6 space-y-5 text-center">
+                  <div className="flex justify-center">
+                    <div className="w-14 h-14 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 flex items-center justify-center">
+                      <Sword className="w-7 h-7 text-[#C9A84C]" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="font-display text-lg text-[#E8D5A3] tracking-wide">準備好迎接任務了嗎？</h2>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={() => { setLocationConfirmed(true); setShowReadyDialog(false); }}
+                      className="w-full h-12 rounded-sm bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display tracking-wider btn-rpg"
+                    >
+                      準備好了！
+                    </button>
+                    <button
+                      onClick={() => setShowReadyDialog(false)}
+                      className="w-full h-11 rounded-sm border border-[#C9A84C]/20 text-sm font-display text-[#E8D5A3]/60 hover:text-[#E8D5A3] hover:border-[#C9A84C]/40 transition-colors duration-150 active:scale-95"
+                    >
+                      其實我還沒到
+                    </button>
+                  </div>
+                </div>
+                <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/20 to-transparent" />
+              </div>
+            </div>
+          )}
+
+          {/* Gate screen */}
+          <div className="max-w-lg mx-auto px-4 pt-16 pb-8 flex flex-col items-center justify-center min-h-screen">
+            <div className="text-center space-y-8 animate-fade-up">
+              <div className="flex justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-[#C9A84C]/10 border border-[#C9A84C]/20 flex items-center justify-center">
+                  <MapPin className="w-8 h-8 text-[#C9A84C]" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="font-manuscript text-[#E8D5A3]/60 text-base">你現在是不是到</p>
+                <h1 className="font-display text-2xl text-gold-gradient tracking-wide">
+                  「{station.name}」
+                </h1>
+                <p className="font-manuscript text-[#E8D5A3]/60 text-base">了？</p>
+              </div>
+              <button
+                onClick={() => setShowReadyDialog(true)}
+                className="h-12 px-10 rounded-sm bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display tracking-wider btn-rpg"
+              >
+                是
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* ── Departure Dialog (stations 1-3) ── */}
       {isDeparting && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
@@ -419,7 +488,7 @@ export function StationPage({ station }: StationPageProps) {
         </div>
       )}
 
-      <div className="max-w-lg mx-auto px-4 pt-16 pb-8 space-y-6">
+      {locationConfirmed && <div className="max-w-lg mx-auto px-4 pt-16 pb-8 space-y-6">
         {/* Header */}
         <header className="text-center space-y-3 pt-4">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#C9A84C]/10 border border-[#C9A84C]/20">
@@ -599,7 +668,7 @@ export function StationPage({ station }: StationPageProps) {
           </button>
           <div className="border-b border-[#C9A84C]/20" />
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
