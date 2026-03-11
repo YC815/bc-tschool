@@ -116,13 +116,19 @@ async function generate(input: GeneratorInput): Promise<string> {
   wrapText(ctx, `「${quote}」`, W / 2, 930, 900, 36);
 
   ctx.fillStyle = "#C9A84C";
-  ctx.font = `bold 16px Cinzel, serif`;
+  ctx.font = `bold 18px Cinzel, serif`;
   ctx.textAlign = "right";
   ctx.textBaseline = "bottom";
-  ctx.fillText("100 km 完騎", W - MARGIN, H - 24);
+  ctx.fillText("116 km 完騎", W - MARGIN, H - 24);
 
-  ctx.fillStyle = "rgba(232,213,163,0.6)";
-  ctx.font = `16px "Noto Serif TC", serif`;
+  ctx.fillStyle = "#C9A84C";
+  ctx.font = `bold 18px Cinzel, serif`;
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
+  ctx.fillText("新竹 — 台中", W - MARGIN, H - 50);
+
+  ctx.fillStyle = "#E8D5A3";
+  ctx.font = `bold 28px "Noto Serif TC", serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
   ctx.fillText(input.nickname, MARGIN, H - 24);
