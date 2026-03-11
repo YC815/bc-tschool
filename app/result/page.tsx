@@ -97,23 +97,39 @@ export default function ResultPage() {
             {STATION_META.map((meta) => {
               const Icon = meta.icon;
               const submission = state?.submissions[String(meta.number) as "1" | "2" | "3" | "4"];
-              const msg = submission?.message ?? "—";
+              const photo = submission?.photoDataUrl ?? null;
+              const isFinal = meta.number === 4;
+              const msg = submission?.message;
 
               return (
                 <div key={meta.number} className={`p-4 ${meta.theme.bg}`}>
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className={`w-10 h-10 rounded-sm border ${meta.theme.border} bg-[#0D0D0D]/40 flex items-center justify-center ${meta.theme.icon}`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <p className={`text-sm font-display tracking-wide ${meta.theme.icon}`}>
-                        站 {meta.number}｜{meta.elements.join(" × ")}
-                      </p>
-                    </div>
+                    <p className={`text-sm font-display tracking-wide ${meta.theme.icon}`}>
+                      站 {meta.number}｜{meta.elements.join(" × ")}
+                    </p>
                   </div>
-                  <p className={`text-sm pl-13 italic font-manuscript ${meta.theme.text}`}>
-                    「{msg}」
-                  </p>
+                  {photo ? (
+                    <div className={`overflow-hidden rounded-sm border border-[#C9A84C]/20 ${isFinal ? "aspect-video" : "aspect-[4/3]"}`}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photo}
+                        alt={`站 ${meta.number}`}
+                        className="w-full h-full object-cover photo-aged"
+                      />
+                    </div>
+                  ) : (
+                    <div className={`rounded-sm border border-[#C9A84C]/10 bg-[#0D0D0D]/30 flex items-center justify-center ${isFinal ? "aspect-video" : "aspect-[4/3]"}`}>
+                      <span className={`text-xs font-display ${meta.theme.text} opacity-40`}>未上傳照片</span>
+                    </div>
+                  )}
+                  {isFinal && msg && (
+                    <p className={`mt-3 text-sm italic font-manuscript ${meta.theme.text}`}>
+                      「{msg}」
+                    </p>
+                  )}
                 </div>
               );
             })}

@@ -2,7 +2,7 @@
 
 import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Textarea } from "@/components/ui/textarea";
+
 import { PhotoUploader } from "@/components/photo-uploader";
 import { StationData } from "@/lib/stations";
 import { useJourney } from "@/lib/journey-context";
@@ -13,7 +13,6 @@ import {
   TreePine,
   Landmark,
   Bike,
-  CheckCircle2,
   User,
   LogOut,
   X,
@@ -36,20 +35,10 @@ const STATION_ICONS: Record<number, React.ComponentType<{ className?: string }>>
   4: Landmark,
 };
 
-function charCountColor(len: number): string {
-  if (len === 0) return "text-[#E8D5A3]/30";
-  if (len <= 50) return "text-green-400/80";
-  if (len <= 80) return "text-amber-400/80";
-  return "text-red-400/80";
-}
-
-type FinalPhase = "upload" | "reveal" | "write";
-
 export function StationPage({ station }: StationPageProps) {
   const router = useRouter();
   const { state, isLoaded, saveStationDraft, markSubmitted, clearJourneyData } = useJourney();
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmStep, setConfirmStep] = useState(0);
@@ -57,11 +46,8 @@ export function StationPage({ station }: StationPageProps) {
   const [locationConfirmed, setLocationConfirmed] = useState(false);
   const [showReadyDialog, setShowReadyDialog] = useState(false);
   const [envelopeOpen, setEnvelopeOpen] = useState(false);
-  const [finalPhase, setFinalPhase] = useState<FinalPhase>("upload");
-  const [revealIndex, setRevealIndex] = useState(0);
 
   const stationId = String(station.number) as "1" | "2" | "3" | "4";
-  const maxLen = station.maxLength ?? 100;
 
   // Restore draft from IDB once loaded
   useEffect(() => {
@@ -70,37 +56,29 @@ export function StationPage({ station }: StationPageProps) {
     if (draft) {
       startTransition(() => {
         if (draft.photoDataUrl) setPhotoDataUrl(draft.photoDataUrl);
-        if (draft.message) setMessage(draft.message);
         // Skip location gate if station already completed
         if (draft.submittedAt) setLocationConfirmed(true);
       });
     }
   }, [isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Envelope open animation (station 4 only, upload phase)
+  // Envelope open animation (station 4 only)
   useEffect(() => {
-    if (!station.isFinal || finalPhase !== "upload") return;
+    if (!station.isFinal) return;
     const t = setTimeout(() => setEnvelopeOpen(true), 600);
     return () => clearTimeout(t);
-  }, [station.isFinal, finalPhase]);
+  }, [station.isFinal]);
 
   const handlePhotoSelect = async (dataUrl: string | null) => {
     setPhotoDataUrl(dataUrl);
     await saveStationDraft(stationId, { photoDataUrl: dataUrl });
   };
 
-  const handleMessageChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    if (val.length > maxLen) return;
-    setMessage(val);
-    await saveStationDraft(stationId, { message: val });
-  };
-
   const handleSubmit = async () => {
     if (!photoDataUrl) return;
 
-    // Station 4, upload phase: submit photo, then enter reveal
-    if (station.isFinal && finalPhase === "upload") {
+    // Station 4: after photo upload, go to write page
+    if (station.isFinal) {
       setIsSubmitting(true);
       try {
         await fetch("/api/journey/submit", {
@@ -118,31 +96,7 @@ export function StationPage({ station }: StationPageProps) {
         // Silent fail
       }
       setIsSubmitting(false);
-      setFinalPhase("reveal");
-      return;
-    }
-
-    // Station 4, write phase: upsert with message, then go to result
-    if (station.isFinal && finalPhase === "write") {
-      if (message.length > maxLen) return;
-      setIsSubmitting(true);
-      try {
-        await saveStationDraft(stationId, { message });
-        await fetch("/api/journey/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            stationId: station.number,
-            photoDataUrl,
-            message,
-            nickname: state?.nickname ?? "",
-          }),
-        });
-      } catch {
-        // Silent fail
-      }
-      setIsSubmitting(false);
-      router.push(station.nextStation);
+      router.push("/station/4/write");
       return;
     }
 
@@ -172,13 +126,7 @@ export function StationPage({ station }: StationPageProps) {
     router.push("/");
   };
 
-  const isComplete = station.isFinal
-    ? finalPhase === "upload"
-      ? !!photoDataUrl
-      : finalPhase === "write"
-        ? message.length > 0 && message.length <= maxLen
-        : false
-    : !!photoDataUrl;
+  const isComplete = !!photoDataUrl;
 
   const progressPercent = (station.number / 4) * 100;
   const StationIcon = STATION_ICONS[station.number] ?? Landmark;
@@ -336,63 +284,6 @@ export function StationPage({ station }: StationPageProps) {
           </div>
         </div>
       )}
-
-      {/* ── Station 4 Reveal Overlay ── */}
-      {station.isFinal && finalPhase === "reveal" && (() => {
-        const revealDialogues = station.revealDialogues ?? [];
-        return (
-          <div className="fixed inset-0 z-[60] flex items-end justify-center px-4 pb-8">
-            <div className="absolute inset-0 bg-[#0D0D0D]/92 backdrop-blur-sm" />
-            <div
-              className="relative w-full max-w-sm scroll-border rounded-sm bg-[#0D0D0D]/95 overflow-hidden animate-dialogue"
-              key={revealIndex}
-              onClick={() => {
-                if (revealIndex < revealDialogues.length) {
-                  setRevealIndex((v) => v + 1);
-                }
-              }}
-            >
-              <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
-              <div className="p-5 min-h-[100px] space-y-3">
-                {revealIndex < revealDialogues.length ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]" />
-                      <span className="text-xs font-display text-[#C9A84C]/70 tracking-wider">旁白</span>
-                    </div>
-                    <p className="font-manuscript text-[#E8D5A3]/90 leading-relaxed text-base">
-                      {revealDialogues[revealIndex]}
-                    </p>
-                    <div className="flex justify-end">
-                      <div className="flex items-center gap-1.5 text-[#C9A84C]/40 text-xs font-manuscript">
-                        <span>點擊繼續</span>
-                        <span className="inline-block w-2 h-2 border-r-2 border-b-2 border-[#C9A84C]/40 rotate-45 mb-0.5" />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#4A90D9]" />
-                      <span className="text-xs font-display text-[#4A90D9] tracking-wider">風之使者</span>
-                    </div>
-                    <p className="font-manuscript text-[#E8D5A3]/90 leading-relaxed text-base">
-                      {station.messengerReveal}
-                    </p>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setFinalPhase("write"); }}
-                      className="w-full h-11 mt-2 rounded-sm bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display tracking-wider btn-rpg text-sm"
-                    >
-                      留下你的話
-                    </button>
-                  </>
-                )}
-              </div>
-              <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/20 to-transparent" />
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ── Location Confirmation Gate ── */}
       {!locationConfirmed && (
@@ -560,34 +451,32 @@ export function StationPage({ station }: StationPageProps) {
         )}
 
         {/* Guide Card */}
-        {!station.isFinal && (
-          <div className="scroll-border rounded-sm overflow-hidden animate-fade-up" style={{ animationDelay: "80ms" }}>
-            {/* Banner */}
-            <div className="bg-[#1A1208] border-b border-[#C9A84C]/30 px-5 py-3">
-              <div className="flex items-center gap-2 text-[#C9A84C] font-display tracking-widest text-base">
-                <Sword className="w-4 h-4" />
-                <span>任 務 指 引</span>
-              </div>
-              <div className="mt-1 text-[#C9A84C]/30 text-xs tracking-widest select-none">
-                ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
-              </div>
+        <div className="scroll-border rounded-sm overflow-hidden animate-fade-up" style={{ animationDelay: "80ms" }}>
+          {/* Banner */}
+          <div className="bg-[#1A1208] border-b border-[#C9A84C]/30 px-5 py-3">
+            <div className="flex items-center gap-2 text-[#C9A84C] font-display tracking-widest text-base">
+              <Sword className="w-4 h-4" />
+              <span>任 務 指 引</span>
             </div>
-            {/* Steps */}
-            <ul>
-              {station.guide.map((step, index) => (
-                <li
-                  key={index}
-                  className="flex gap-3 px-5 py-4 border-b border-[#C9A84C]/10 last:border-b-0 border-l-2 border-l-[#C9A84C]/50 font-manuscript"
-                >
-                  <span className="flex-shrink-0 w-7 h-7 rounded-sm bg-[#C9A84C]/15 border border-[#C9A84C]/30 font-display text-[#C9A84C] text-sm flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <span className="text-[#E8D5A3]/90 text-base leading-relaxed">{step}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-1 text-[#C9A84C]/30 text-xs tracking-widest select-none">
+              ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+            </div>
           </div>
-        )}
+          {/* Steps */}
+          <ul>
+            {station.guide.map((step, index) => (
+              <li
+                key={index}
+                className="flex gap-3 px-5 py-4 border-b border-[#C9A84C]/10 last:border-b-0 border-l-2 border-l-[#C9A84C]/50 font-manuscript"
+              >
+                <span className="flex-shrink-0 w-7 h-7 rounded-sm bg-[#C9A84C]/15 border border-[#C9A84C]/30 font-display text-[#C9A84C] text-sm flex items-center justify-center">
+                  {index + 1}
+                </span>
+                <span className="text-[#E8D5A3]/90 text-base leading-relaxed">{step}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* Task Card */}
         <div
@@ -599,7 +488,7 @@ export function StationPage({ station }: StationPageProps) {
           </div>
           <div className="flex items-start gap-3">
             <div className={`p-2 rounded-sm bg-[#0D0D0D]/40 ${station.theme.cardAccentText}`}>
-              {station.isFinal ? <CheckCircle2 className="w-5 h-5" /> : <Bike className="w-5 h-5" />}
+               <Bike className="w-5 h-5" />
             </div>
             <div>
               <p className={`font-display tracking-wide text-sm ${station.theme.cardAccentTitle}`}>
@@ -620,37 +509,10 @@ export function StationPage({ station }: StationPageProps) {
             <span>{station.isFinal ? "最終回報" : "此站回報"}</span>
           </div>
 
-          {/* Station 4 write phase: textarea only */}
-          {station.isFinal && finalPhase === "write" ? (
-            <div className="space-y-2 animate-fade-up">
-              <label className="text-sm font-manuscript text-[#E8D5A3]/60">
-                {station.prompt ?? "走完這段路，我想說的是"}
-              </label>
-              <div className="relative">
-                <Textarea
-                  placeholder="走完這段路，我想說的是..."
-                  value={message}
-                  onChange={handleMessageChange}
-                  className="min-h-[120px] resize-none border-[#C9A84C]/20 focus-visible:ring-[#C9A84C]/30 text-[#E8D5A3] placeholder:text-[#C9A84C]/30 font-manuscript"
-                  style={{
-                    backgroundImage:
-                      "repeating-linear-gradient(transparent, transparent 27px, rgba(201, 168, 76, 0.06) 27px, rgba(201, 168, 76, 0.06) 28px)",
-                    backgroundColor: "rgba(26, 18, 8, 0.6)",
-                  }}
-                />
-                <div
-                  className={`absolute bottom-2 right-2 text-xs tabular-nums transition-colors duration-200 ${charCountColor(message.length)}`}
-                >
-                  {message.length}/{maxLen}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <PhotoUploader
-              onPhotoSelect={handlePhotoSelect}
-              dataUrl={photoDataUrl}
-            />
-          )}
+          <PhotoUploader
+            onPhotoSelect={handlePhotoSelect}
+            dataUrl={photoDataUrl}
+          />
 
           <button
             className="w-full h-12 rounded-sm bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display tracking-wider btn-rpg disabled:opacity-30 disabled:cursor-not-allowed"
@@ -659,11 +521,9 @@ export function StationPage({ station }: StationPageProps) {
           >
             {isSubmitting
               ? "儲存中..."
-              : station.isFinal && finalPhase === "write"
-                ? "完成旅程，生成專屬紀念"
-                : station.isFinal
-                  ? "完成"
-                  : "完成，前往下一站"
+              : station.isFinal
+                ? "完成，前往最後任務"
+                : "完成，前往下一站"
             }
           </button>
           <div className="border-b border-[#C9A84C]/20" />
