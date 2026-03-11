@@ -139,9 +139,10 @@ async function generate(input: GeneratorInput): Promise<string> {
   ctx.fillText("完騎", CENTER_X + 12, kmY);
 
   // === STATION PHOTOS GRID (2x2 within safe zone) ===
-  const GRID_Y = SAFE_TOP + SAFE_HEIGHT * 0.42;
-  const THUMB = 195;
-  const THUMB_GAP = 24;
+  // 調整佈局參數以最大化圖片尺寸
+  const GRID_Y = SAFE_TOP + SAFE_HEIGHT * 0.40;
+  const THUMB = 220; // 從 195 增加到 220
+  const THUMB_GAP = 20; // 從 24 減少到 20，讓圖片更大
   const GRID_W = 2 * THUMB + THUMB_GAP;
   const GRID_START_X = (W - GRID_W) / 2;
 
