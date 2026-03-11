@@ -14,25 +14,49 @@ async function generate(input: GeneratorInput): Promise<string> {
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // Background
+  // 1. 全畫布深褐色背景
   ctx.fillStyle = "#1A1208";
   ctx.fillRect(0, 0, W, H);
 
-  // 2×2 photo grid: total photo area y=24..880 → h=856
-  const GRID_X = 24;
-  const GRID_Y = 24;
-  const GRID_W = W - 48; // 1032 → but 2 cols with 16px gap
-  const COL_GAP = 16;
-  const ROW_GAP = 24;
-  const PHOTO_W = (GRID_W - COL_GAP) / 2; // ~508
-  const PHOTO_AREA_H = 880 - GRID_Y;
-  const PHOTO_H = (PHOTO_AREA_H - ROW_GAP) / 2; // ~416
+  // 2. 雙線金框
+  ctx.strokeStyle = "rgba(201,168,76,0.6)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(12, 12, W - 24, H - 24);
 
-  const positions = [
-    [GRID_X, GRID_Y],
-    [GRID_X + PHOTO_W + COL_GAP, GRID_Y],
-    [GRID_X, GRID_Y + PHOTO_H + ROW_GAP],
-    [GRID_X + PHOTO_W + COL_GAP, GRID_Y + PHOTO_H + ROW_GAP],
+  ctx.strokeStyle = "rgba(201,168,76,0.25)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(20, 20, W - 40, H - 40);
+
+  // 3. 四角刻度線（L 型，16px）
+  const TICK = 16;
+  const corners = [
+    { x: 20, y: 20, dx: 1, dy: 1 },
+    { x: W - 20, y: 20, dx: -1, dy: 1 },
+    { x: 20, y: H - 20, dx: 1, dy: -1 },
+    { x: W - 20, y: H - 20, dx: -1, dy: -1 },
+  ];
+  ctx.strokeStyle = "#C9A84C";
+  ctx.lineWidth = 1.5;
+  for (const { x, y, dx, dy } of corners) {
+    ctx.beginPath();
+    ctx.moveTo(x + dx * TICK, y);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x, y + dy * TICK);
+    ctx.stroke();
+  }
+
+  // 4. 照片格線（2×2），外邊距 40px，格間距 12px
+  const MARGIN = 40;
+  const GAP = 12;
+  const PHOTO_AREA_BOTTOM = 880;
+  const PHOTO_W = (W - MARGIN * 2 - GAP) / 2; // 494
+  const PHOTO_H = (PHOTO_AREA_BOTTOM - MARGIN - GAP) / 2; // 414
+
+  const positions: [number, number][] = [
+    [MARGIN, MARGIN],
+    [MARGIN + PHOTO_W + GAP, MARGIN],
+    [MARGIN, MARGIN + PHOTO_H + GAP],
+    [MARGIN + PHOTO_W + GAP, MARGIN + PHOTO_H + GAP],
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -53,41 +77,55 @@ async function generate(input: GeneratorInput): Promise<string> {
     } else {
       drawPlaceholder(ctx, px, py, PHOTO_W, PHOTO_H, LABELS[i], ROMAN[i]);
     }
+    // 每格照片極細金邊
+    ctx.strokeStyle = "rgba(201,168,76,0.3)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 0.5, py + 0.5, PHOTO_W - 1, PHOTO_H - 1);
   }
 
-  // Bottom white bar
-  const BAR_Y = 880;
-  const BAR_H = 200;
-  ctx.fillStyle = "#FDFAF5";
-  ctx.fillRect(0, BAR_Y, W, BAR_H);
+  // 5. 中心菱形（四格交叉點，x=540, y=460）
+  const DX = MARGIN + PHOTO_W + GAP / 2; // 540
+  const DY = MARGIN + PHOTO_H + GAP / 2; // 460
+  const DR = 4;
+  ctx.fillStyle = "rgba(201,168,76,0.7)";
+  ctx.beginPath();
+  ctx.moveTo(DX, DY - DR);
+  ctx.lineTo(DX + DR, DY);
+  ctx.lineTo(DX, DY + DR);
+  ctx.lineTo(DX - DR, DY);
+  ctx.closePath();
+  ctx.fill();
 
-  // Outer frame inset stroke
-  ctx.strokeStyle = "#1A0D00";
-  ctx.lineWidth = 12;
-  ctx.strokeRect(6, 6, W - 12, H - 12);
+  // 6. 頁腳深色 overlay + 分隔線
+  ctx.fillStyle = "rgba(0,0,0,0.2)";
+  ctx.fillRect(0, PHOTO_AREA_BOTTOM, W, H - PHOTO_AREA_BOTTOM);
 
-  // Gold quote
+  ctx.strokeStyle = "rgba(201,168,76,0.5)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(MARGIN, 892);
+  ctx.lineTo(W - MARGIN, 892);
+  ctx.stroke();
+
+  // 7. 文字層級（深底亮色）
   const quote = input.quote || "一段難忘的旅程";
-  ctx.fillStyle = "#2A1E0A";
-  ctx.font = `italic 28px "EB Garamond", serif`;
+  ctx.fillStyle = "#E8D5A3";
+  ctx.font = `italic 26px "EB Garamond", serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  const quoteText = `「${quote}」`;
-  wrapText(ctx, quoteText, W / 2, BAR_Y + 70, W - 120, 36);
+  wrapText(ctx, `「${quote}」`, W / 2, 930, 900, 36);
 
-  // "100km 完騎" label
   ctx.fillStyle = "#C9A84C";
-  ctx.font = `bold 20px Cinzel, serif`;
+  ctx.font = `bold 16px Cinzel, serif`;
   ctx.textAlign = "right";
   ctx.textBaseline = "bottom";
-  ctx.fillText("100 km 完騎", W - 32, BAR_Y + BAR_H - 24);
+  ctx.fillText("100 km 完騎", W - MARGIN, H - 24);
 
-  // Nickname
-  ctx.fillStyle = "#2A1E0A";
-  ctx.font = `18px "Noto Serif TC", serif`;
+  ctx.fillStyle = "rgba(232,213,163,0.6)";
+  ctx.font = `16px "Noto Serif TC", serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
-  ctx.fillText(input.nickname, 32, BAR_Y + BAR_H - 24);
+  ctx.fillText(input.nickname, MARGIN, H - 24);
 
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
