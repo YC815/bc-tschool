@@ -7,7 +7,7 @@ import { Landmark, User, LogOut, X, AlertTriangle, Skull, Wind } from "lucide-re
 
 function charCountColor(len: number): string {
   if (len === 0) return "text-[#E8D5A3]/30";
-  if (len <= 50) return "text-green-400/80";
+  if (len <= 40) return "text-green-400/80";
   if (len <= 100) return "text-amber-400/80";
   return "text-red-400/80";
 }
@@ -311,9 +311,14 @@ export default function Station4WritePage() {
               <div
                 className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs tabular-nums transition-colors duration-200 pointer-events-none ${charCountColor(message.length)}`}
               >
-                {message.length}/{maxLen}
+                {message.length}/40
               </div>
             </div>
+            {message.length > 40 && (
+              <p className="text-xs font-manuscript text-amber-400/70">
+                不建議引言字數過多，可能會影響紀念圖顯示效果
+              </p>
+            )}
           </div>
 
           <button

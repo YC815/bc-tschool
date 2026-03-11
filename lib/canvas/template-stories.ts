@@ -32,6 +32,16 @@ async function generate(input: GeneratorInput): Promise<string> {
   const W = 1080;
   const H = 1920;
 
+  // IG Story Safe Zone - 精準邊界規劃
+  // 頂部 250px: 頭像、帳號名稱、動態點點
+  // 底部 250px: 發送訊息框、連結貼紙
+  // 左右 60px: 避免邊緣裁切
+  const SAFE_TOP = 250;
+  const SAFE_BOTTOM = 250;
+  const SAFE_PADDING_X = 60;
+  const SAFE_WIDTH = W - SAFE_PADDING_X * 2; // 960px
+  const SAFE_HEIGHT = H - SAFE_TOP - SAFE_BOTTOM; // 1420px
+
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -56,94 +66,100 @@ async function generate(input: GeneratorInput): Promise<string> {
   ctx.fillStyle = "#0D0D0D";
   ctx.fillRect(0, 0, W, H);
 
-  // === ZONE 1: Hero photo + "116" (0 to 672) ===
-  const Z1_H = 672;
-
+  // === BACKGROUND PHOTO (全螢幕，但內容在安全區) ===
   if (heroImg) {
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, W, Z1_H);
+    ctx.rect(0, 0, W, H);
     ctx.clip();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (ctx as any).filter = "brightness(0.55) saturate(0.85)";
-    drawPhotoFilled(ctx, heroImg, 0, 0, W, Z1_H);
+    (ctx as any).filter = "brightness(0.35) saturate(0.85)";
+    drawPhotoFilled(ctx, heroImg, 0, 0, W, H);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (ctx as any).filter = "none";
     ctx.restore();
   }
 
-  // Gradient overlay on Zone 1
-  const grad1 = ctx.createLinearGradient(0, 0, 0, Z1_H);
-  grad1.addColorStop(0, "rgba(0,0,0,0.65)");
-  grad1.addColorStop(0.45, "rgba(0,0,0,0.15)");
-  grad1.addColorStop(1, "rgba(13,13,13,0.85)");
-  ctx.fillStyle = grad1;
-  ctx.fillRect(0, 0, W, Z1_H);
+  // Gradient overlay for safe zone protection
+  // Top gradient - stronger for UI protection
+  const gradTop = ctx.createLinearGradient(0, 0, 0, SAFE_TOP);
+  gradTop.addColorStop(0, "rgba(0,0,0,0.92)");
+  gradTop.addColorStop(0.6, "rgba(0,0,0,0.6)");
+  gradTop.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradTop;
+  ctx.fillRect(0, 0, W, SAFE_TOP);
 
-  // Activity header top-left
-  ctx.fillStyle = "rgba(201,168,76,0.9)";
-  ctx.font = `bold 18px Cinzel, serif`;
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  ctx.fillText("ELEMENTAL RELAY  2025", 44, 44);
-  ctx.fillStyle = "rgba(232,213,163,0.55)";
-  ctx.font = `16px "Noto Serif TC", serif`;
-  ctx.fillText("元素傳遞", 44, 70);
+  // Bottom gradient - stronger for UI protection
+  const gradBottom = ctx.createLinearGradient(0, H - SAFE_BOTTOM, 0, H);
+  gradBottom.addColorStop(0, "rgba(0,0,0,0)");
+  gradBottom.addColorStop(0.4, "rgba(0,0,0,0.7)");
+  gradBottom.addColorStop(1, "rgba(0,0,0,0.95)");
+  ctx.fillStyle = gradBottom;
+  ctx.fillRect(0, H - SAFE_BOTTOM, W, SAFE_BOTTOM);
 
-  // "116" giant with gold glow
-  ctx.save();
-  ctx.fillStyle = "#C9A84C";
-  ctx.font = `bold 250px Cinzel, serif`;
+  // === SAFE ZONE BOUNDARIES (for debugging - remove in production) ===
+  // ctx.strokeStyle = "rgba(255,0,0,0.3)";
+  // ctx.lineWidth = 1;
+  // ctx.strokeRect(SAFE_PADDING_X, SAFE_TOP, SAFE_WIDTH, SAFE_HEIGHT);
+
+  // === MAIN CONTENT - ALL WITHIN SAFE ZONE ===
+  const CENTER_X = W / 2;
+
+  // 大標題 - 放在 116 上方，字更大
+  const titleY = SAFE_TOP + SAFE_HEIGHT * 0.08;
+  ctx.fillStyle = "rgba(201,168,76,0.95)";
+  ctx.font = `bold 42px Cinzel, serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.shadowColor = "rgba(201,168,76,0.75)";
-  ctx.shadowBlur = 40;
-  ctx.fillText("116", W / 2, 340);
+  ctx.fillText("2026 環島 Day.2", CENTER_X, titleY);
+
+  // "116" - Centered in safe zone
+  const numberY = SAFE_TOP + SAFE_HEIGHT * 0.22;
+  ctx.save();
+  ctx.fillStyle = "#C9A84C";
+  ctx.font = `bold 300px Cinzel, serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = "rgba(201,168,76,0.85)";
+  ctx.shadowBlur = 50;
+  ctx.fillText("116", CENTER_X, numberY);
   ctx.restore();
 
-  // "km 完騎" below the number
+  // "km 完騎"
+  const kmY = numberY + 150;
   ctx.fillStyle = "#E8D5A3";
-  ctx.font = `bold 38px Cinzel, serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText("km", W / 2 - 52, 494);
+  ctx.font = `bold 48px Cinzel, serif`;
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.fillText("km", CENTER_X - 12, kmY);
 
-  ctx.fillStyle = "rgba(232,213,163,0.8)";
-  ctx.font = `32px "Noto Serif TC", serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText("完騎", W / 2 + 52, 498);
+  ctx.fillStyle = "rgba(232,213,163,0.95)";
+  ctx.font = `bold 42px "Noto Serif TC", serif`;
+  ctx.textAlign = "left";
+  ctx.fillText("完騎", CENTER_X + 12, kmY);
 
-  // === ZONE 2: Station photos + route (672 to 1440) ===
-  const Z2_Y = Z1_H;
-
-  // Divider
-  ctx.strokeStyle = "rgba(201,168,76,0.4)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(40, Z2_Y);
-  ctx.lineTo(W - 40, Z2_Y);
-  ctx.stroke();
-
-  // 4 station thumbnails in a row
-  const THUMB = 200;
-  const THUMB_GAP = 13;
-  const THUMBS_TOTAL_W = 4 * THUMB + 3 * THUMB_GAP;
-  const THUMB_START_X = (W - THUMBS_TOTAL_W) / 2;
-  const THUMB_Y = Z2_Y + 60;
+  // === STATION PHOTOS GRID (2x2 within safe zone) ===
+  const GRID_Y = SAFE_TOP + SAFE_HEIGHT * 0.42;
+  const THUMB = 195;
+  const THUMB_GAP = 24;
+  const GRID_W = 2 * THUMB + THUMB_GAP;
+  const GRID_START_X = (W - GRID_W) / 2;
 
   for (let i = 0; i < 4; i++) {
-    const tx = THUMB_START_X + i * (THUMB + THUMB_GAP);
-    const ty = THUMB_Y;
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const tx = GRID_START_X + col * (THUMB + THUMB_GAP);
+    const ty = GRID_Y + row * (THUMB + THUMB_GAP + 40);
     const img = images[i];
 
+    // Photo frame with border
     ctx.save();
-    roundRect(ctx, tx, ty, THUMB, THUMB, 8);
+    roundRect(ctx, tx, ty, THUMB, THUMB, 10);
     ctx.clip();
 
     if (img) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (ctx as any).filter = "sepia(0.1) brightness(0.88)";
+      (ctx as any).filter = "sepia(0.06) brightness(0.94)";
       drawPhotoFilled(ctx, img, tx, ty, THUMB, THUMB);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (ctx as any).filter = "none";
@@ -152,119 +168,100 @@ async function generate(input: GeneratorInput): Promise<string> {
     }
     ctx.restore();
 
-    ctx.strokeStyle = "rgba(201,168,76,0.5)";
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, tx, ty, THUMB, THUMB, 8);
+    // Border
+    ctx.strokeStyle = "rgba(201,168,76,0.65)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, tx, ty, THUMB, THUMB, 10);
     ctx.stroke();
 
-    // Element label
+    // Station number + element label
     ctx.fillStyle = "#C9A84C";
-    ctx.font = `bold 14px "Noto Serif TC", serif`;
-    ctx.textAlign = "center";
+    ctx.font = `bold 16px Cinzel, serif`;
+    ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(LABELS[i], tx + THUMB / 2, ty + THUMB + 10);
+    ctx.fillText(ROMAN[i], tx, ty + THUMB + 10);
+
+    ctx.fillStyle = "rgba(232,213,163,0.85)";
+    ctx.font = `bold 15px "Noto Serif TC", serif`;
+    ctx.textAlign = "right";
+    ctx.fillText(LABELS[i], tx + THUMB, ty + THUMB + 11);
   }
 
-  // Route timeline
-  const ROUTE_Y = THUMB_Y + THUMB + 56;
-  const DOT_R = 6;
+  // === ROUTE INFO ===
+  const ROUTE_Y = GRID_Y + 2 * (THUMB + THUMB_GAP + 40) + 25;
 
-  const dotX: number[] = Array.from(
-    { length: 4 },
-    (_, i) => THUMB_START_X + i * (THUMB + THUMB_GAP) + THUMB / 2
-  );
-
-  // Connecting line
-  ctx.strokeStyle = "rgba(201,168,76,0.45)";
-  ctx.lineWidth = 1.5;
+  // Route line - 四個站點置中排列
+  const routeGap = THUMB + THUMB_GAP;
+  const totalRouteWidth = 3 * routeGap; // 四個點之間有三個間隔
+  const routeStartX = CENTER_X - totalRouteWidth / 2;
+  
+  ctx.strokeStyle = "rgba(201,168,76,0.55)";
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(dotX[0], ROUTE_Y);
-  ctx.lineTo(dotX[3], ROUTE_Y);
+  ctx.moveTo(routeStartX, ROUTE_Y);
+  ctx.lineTo(routeStartX + totalRouteWidth, ROUTE_Y);
   ctx.stroke();
 
-  // Dots
-  for (const dx of dotX) {
+  // Station dots and names - 四個點置中
+  const DOT_R = 7;
+  const stationDots = [
+    routeStartX,
+    routeStartX + routeGap,
+    routeStartX + 2 * routeGap,
+    routeStartX + 3 * routeGap,
+  ];
+
+  for (let i = 0; i < 4; i++) {
+    const dx = stationDots[i];
+
+    // Dot
     ctx.fillStyle = "#C9A84C";
     ctx.beginPath();
     ctx.arc(dx, ROUTE_Y, DOT_R, 0, Math.PI * 2);
     ctx.fill();
-  }
 
-  // Station names
-  ctx.fillStyle = "#E8D5A3";
-  ctx.font = `16px "Noto Serif TC", serif`;
-  ctx.textBaseline = "top";
-  for (let i = 0; i < 4; i++) {
+    // Station name
+    ctx.fillStyle = "#E8D5A3";
+    ctx.font = `bold 18px "Noto Serif TC", serif`;
     ctx.textAlign = "center";
-    ctx.fillText(STATIONS[i], dotX[i], ROUTE_Y + DOT_R + 10);
+    ctx.textBaseline = "top";
+    ctx.fillText(STATIONS[i], dx, ROUTE_Y + DOT_R + 10);
   }
 
-  // Route label: 新竹 → 台中
-  ctx.fillStyle = "rgba(201,168,76,0.5)";
-  ctx.font = `italic 20px "EB Garamond", serif`;
+  // Route summary
+  ctx.fillStyle = "rgba(201,168,76,0.75)";
+  ctx.font = `italic 22px "EB Garamond", serif`;
   ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText("新竹  ·  台中  116 km", W / 2, ROUTE_Y + DOT_R + 46);
+  ctx.fillText("新竹  →  台中  ·  116 km", CENTER_X, ROUTE_Y + 48);
 
-  // === ZONE 3: Quote + name (1440 to 1920) ===
-  const Z3_Y = 1440;
+  // === QUOTE & NAME (within safe zone bottom) ===
+  // 增加與上方路線資訊的間距，避免重疊
+  const QUOTE_Y = SAFE_TOP + SAFE_HEIGHT - 180;
 
-  // Subtle background gradient for Zone 3
-  const grad3 = ctx.createLinearGradient(0, Z3_Y, 0, H);
-  grad3.addColorStop(0, "rgba(26,18,8,0.0)");
-  grad3.addColorStop(1, "rgba(26,18,8,0.5)");
-  ctx.fillStyle = grad3;
-  ctx.fillRect(0, Z3_Y, W, H - Z3_Y);
-
-  // Divider with diamond
-  ctx.strokeStyle = "rgba(201,168,76,0.3)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(40, Z3_Y);
-  ctx.lineTo(W - 40, Z3_Y);
-  ctx.stroke();
-
-  const DMR = 6;
-  ctx.fillStyle = "rgba(201,168,76,0.5)";
-  ctx.beginPath();
-  ctx.moveTo(W / 2, Z3_Y - DMR);
-  ctx.lineTo(W / 2 + DMR, Z3_Y);
-  ctx.lineTo(W / 2, Z3_Y + DMR);
-  ctx.lineTo(W / 2 - DMR, Z3_Y);
-  ctx.closePath();
-  ctx.fill();
-
-  // Quote
+  // Quote - 限制最多 2 行，避免擋到暱稱
   const quote = input.quote || "一段難忘的旅程";
   ctx.fillStyle = "#E8D5A3";
-  ctx.font = `italic 34px "EB Garamond", serif`;
+  ctx.font = `italic 38px "EB Garamond", serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  const afterQuoteY = wrapText(ctx, `「${quote}」`, W / 2, Z3_Y + 44, W - 120, 50);
+  const afterQuoteY = wrapText(ctx, `「${quote}」`, CENTER_X, QUOTE_Y, SAFE_WIDTH - 80, 52, 2);
 
-  // Name separator line
-  const nameSepY = Math.min(Math.max(afterQuoteY + 24, 1720), 1820);
-  ctx.strokeStyle = "rgba(201,168,76,0.25)";
-  ctx.lineWidth = 1;
+  // Name separator line - 動態計算位置，確保與引言有足夠間距
+  const nameY = Math.max(afterQuoteY + 20, QUOTE_Y + 110);
+  ctx.strokeStyle = "rgba(201,168,76,0.45)";
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(W / 2 - 90, nameSepY);
-  ctx.lineTo(W / 2 + 90, nameSepY);
+  ctx.moveTo(CENTER_X - 110, nameY);
+  ctx.lineTo(CENTER_X + 110, nameY);
   ctx.stroke();
 
   // Nickname
   ctx.fillStyle = "#C9A84C";
-  ctx.font = `bold 30px "Noto Serif TC", serif`;
+  ctx.font = `bold 32px "Noto Serif TC", serif`;
   ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText(input.nickname, W / 2, nameSepY + 18);
+  ctx.fillText(input.nickname, CENTER_X, nameY + 18);
 
-  // Activity tag
-  ctx.fillStyle = "rgba(201,168,76,0.45)";
-  ctx.font = `16px Cinzel, serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillText("元素傳遞  ·  2025", W / 2, nameSepY + 60);
-
+  // Reset text alignment
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 

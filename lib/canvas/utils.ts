@@ -64,25 +64,37 @@ export function wrapText(
   x: number,
   y: number,
   maxWidth: number,
-  lineHeight: number
+  lineHeight: number,
+  maxLines?: number
 ): number {
   const chars = Array.from(text);
   let line = "";
   let currentY = y;
+  let lineCount = 0;
 
   for (const char of chars) {
     const testLine = line + char;
     const metrics = ctx.measureText(testLine);
     if (metrics.width > maxWidth && line.length > 0) {
+      if (maxLines && lineCount >= maxLines - 1) {
+        // 達到最大行數，截斷並加上省略號
+        ctx.fillText(line.slice(0, -1) + "...", x, currentY);
+        return currentY + lineHeight;
+      }
       ctx.fillText(line, x, currentY);
       line = char;
       currentY += lineHeight;
+      lineCount++;
     } else {
       line = testLine;
     }
   }
   if (line) {
-    ctx.fillText(line, x, currentY);
+    if (maxLines && lineCount >= maxLines) {
+      ctx.fillText(line.slice(0, -1) + "...", x, currentY);
+    } else {
+      ctx.fillText(line, x, currentY);
+    }
     currentY += lineHeight;
   }
   return currentY;
