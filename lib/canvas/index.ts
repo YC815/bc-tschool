@@ -9,7 +9,7 @@ import { templateStories } from "./template-stories";
 import type { MemorialTemplate } from "./types";
 
 export const TEMPLATES: MemorialTemplate[] = [
-  templatePolaroid,
   templatePostcard,
+  templatePolaroid,
   templateStories,
 ];
