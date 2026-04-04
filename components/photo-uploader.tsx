@@ -13,10 +13,16 @@ interface PhotoUploaderProps {
 export function PhotoUploader({ onPhotoSelect, dataUrl }: PhotoUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const processFile = async (file: File) => {
-    const encoded = await resizeAndEncodePhoto(file);
-    onPhotoSelect(encoded);
+    setIsLoading(true);
+    try {
+      const encoded = await resizeAndEncodePhoto(file);
+      onPhotoSelect(encoded);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,6 +51,19 @@ export function PhotoUploader({ onPhotoSelect, dataUrl }: PhotoUploaderProps) {
     onPhotoSelect(null);
     if (inputRef.current) inputRef.current.value = "";
   };
+
+  if (isLoading) {
+    return (
+      <div className="relative w-full aspect-video rounded-sm border border-[#C9A84C]/30 flex flex-col items-center justify-center gap-3 bg-[#0D0D0D]">
+        <div className="absolute top-0 left-0 w-5 h-5 border-t-2 border-l-2 border-[#C9A84C]/60" />
+        <div className="absolute top-0 right-0 w-5 h-5 border-t-2 border-r-2 border-[#C9A84C]/60" />
+        <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-[#C9A84C]/60" />
+        <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-[#C9A84C]/60" />
+        <div className="w-10 h-10 border-2 border-[#C9A84C]/20 border-t-[#C9A84C] rounded-full animate-spin" />
+        <p className="text-xs text-[#C9A84C]/60 font-manuscript tracking-widest">處理中...</p>
+      </div>
+    );
+  }
 
   if (dataUrl) {
     return (

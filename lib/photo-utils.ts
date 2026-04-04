@@ -1,16 +1,10 @@
-async function convertHeicToJpeg(file: File): Promise<File> {
-  const isHeic =
-    file.type === "image/heic" ||
-    file.type === "image/heif" ||
-    /\.hei[cf]$/i.test(file.name);
-  if (!isHeic) return file;
-
-  const { default: heic2any } = await import("heic2any");
-  const blob = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
-  const converted = Array.isArray(blob) ? blob[0] : blob;
-  return new File([converted], file.name.replace(/\.hei[cf]$/i, ".jpg"), {
-    type: "image/jpeg",
-  });
+async function convertHeicViaServer(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/convert-heic", { method: "POST", body: formData });
+  if (!res.ok) throw new Error("HEIC conversion failed");
+  const { dataUrl } = await res.json();
+  return dataUrl;
 }
 
 export async function resizeAndEncodePhoto(
@@ -18,8 +12,17 @@ export async function resizeAndEncodePhoto(
   maxWidth = 1000,
   quality = 0.82
 ): Promise<string> {
-  const processedFile = await convertHeicToJpeg(file);
-  const bitmap = await createImageBitmap(processedFile);
+  const isHeic =
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    /\.hei[cf]$/i.test(file.name);
+
+  if (isHeic) {
+    // Server-side conversion via Sharp (most reliable HEIC support)
+    return await convertHeicViaServer(file);
+  }
+
+  const bitmap = await createImageBitmap(file);
 
   const scale = Math.min(1, maxWidth / bitmap.width);
   const width = Math.round(bitmap.width * scale);
