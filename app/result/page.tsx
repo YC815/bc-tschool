@@ -1,20 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Landmark, RotateCcw, Share2 } from "lucide-react";
+import { Landmark, Share2 } from "lucide-react";
 import { useJourney } from "@/lib/journey-context";
 import { MemorialGenerator, InstagramStoryGenerator } from "@/components/memorial-generator";
 
 export default function ResultPage() {
-  const router = useRouter();
-  const { state, clearJourneyData } = useJourney();
+  const { state } = useJourney();
 
   const nickname = state?.nickname ?? "傳遞者";
-
-  const handleRestart = async () => {
-    await clearJourneyData();
-    router.push("/");
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1A1208] via-[#0D0D0D] to-[#080D1A]">
@@ -58,17 +51,6 @@ export default function ResultPage() {
         {/* Memorial Generator - Photo Cards */}
         <div className="scroll-border rounded-sm bg-[#1A1208]/60 p-5 animate-fade-up" style={{ animationDelay: "280ms" }}>
           <MemorialGenerator />
-        </div>
-
-        {/* Actions */}
-        <div className="space-y-3 pt-2 animate-fade-up" style={{ animationDelay: "320ms" }}>
-          <button
-            className="w-full h-12 rounded-sm border border-[#C9A84C]/30 text-[#C9A84C]/80 font-display tracking-wider btn-rpg hover:border-[#C9A84C]/50 hover:bg-[#C9A84C]/5 flex items-center justify-center gap-2"
-            onClick={handleRestart}
-          >
-            <RotateCcw className="w-4 h-4" />
-            開始新的旅程
-          </button>
         </div>
 
         {/* Footer */}

@@ -38,7 +38,7 @@ export function PhotoUploader({ onPhotoSelect, dataUrl }: PhotoUploaderProps) {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) await processFile(file);
+    if (file && (file.type.startsWith("image/") || /\.hei[cf]$/i.test(file.name))) await processFile(file);
   };
 
   const handleClear = () => {
@@ -110,14 +110,14 @@ export function PhotoUploader({ onPhotoSelect, dataUrl }: PhotoUploaderProps) {
           點擊上傳足跡照片
         </p>
         <p className="text-xs text-[#E8D5A3]/30 font-manuscript">
-          放入物品欄 · JPG / PNG
+          放入物品欄 · JPG / PNG / HEIC
         </p>
       </div>
 
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,image/heic,image/heif"
         capture="environment"
         onChange={handleFileChange}
         className="hidden"

@@ -14,7 +14,7 @@ function charCountColor(len: number): string {
 
 export default function Station4WritePage() {
   const router = useRouter();
-  const { state, isLoaded, saveStationDraft, clearJourneyData } = useJourney();
+  const { state, isLoaded, saveStationDraft, markJourneyComplete, clearJourneyData } = useJourney();
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -61,6 +61,7 @@ export default function Station4WritePage() {
           nickname: state?.nickname ?? "",
         }),
       });
+      await markJourneyComplete();
     } catch {
       // Silent fail
     }

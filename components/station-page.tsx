@@ -4,6 +4,7 @@ import { startTransition, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PhotoUploader } from "@/components/photo-uploader";
+import { StationDialogue } from "@/components/station-dialogue";
 import { StationData } from "@/lib/stations";
 import { useJourney } from "@/lib/journey-context";
 import {
@@ -12,7 +13,6 @@ import {
   Flame,
   TreePine,
   Landmark,
-  Bike,
   User,
   LogOut,
   X,
@@ -44,6 +44,7 @@ export function StationPage({ station }: StationPageProps) {
   const [confirmStep, setConfirmStep] = useState(0);
   const [isDeparting, setIsDeparting] = useState(false);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [dialogueDone, setDialogueDone] = useState(false);
   const [showReadyDialog, setShowReadyDialog] = useState(false);
   const [envelopeOpen, setEnvelopeOpen] = useState(false);
 
@@ -57,7 +58,10 @@ export function StationPage({ station }: StationPageProps) {
       startTransition(() => {
         if (draft.photoDataUrl) setPhotoDataUrl(draft.photoDataUrl);
         // Skip location gate if station already completed
-        if (draft.submittedAt) setLocationConfirmed(true);
+        if (draft.submittedAt) {
+          setLocationConfirmed(true);
+          setDialogueDone(true);
+        }
       });
     }
   }, [isLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -379,7 +383,18 @@ export function StationPage({ station }: StationPageProps) {
         </div>
       )}
 
-      {locationConfirmed && <div className="max-w-lg mx-auto px-4 pt-16 pb-8 space-y-6">
+      {/* JRPG 對話層 */}
+      {locationConfirmed && !dialogueDone && station.entryDialogues && (
+        <StationDialogue
+          dialogues={station.entryDialogues}
+          theme={station.theme}
+          stationNumber={station.number}
+          onComplete={() => setDialogueDone(true)}
+        />
+      )}
+
+      {/* 任務 UI */}
+      {locationConfirmed && (dialogueDone || !station.entryDialogues) && <div className="max-w-lg mx-auto px-4 pt-16 pb-8 space-y-6">
         {/* Header */}
         <header className="text-center space-y-3 pt-4">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#C9A84C]/10 border border-[#C9A84C]/20">
@@ -476,29 +491,6 @@ export function StationPage({ station }: StationPageProps) {
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* Task Card */}
-        <div
-          className={`relative scroll-border rounded-sm p-5 ${station.theme.cardAccent} animate-fade-up`}
-          style={{ animationDelay: "160ms" }}
-        >
-          <div className="absolute top-2 right-3 font-display text-xs tracking-widest text-[#C9A84C]/10 select-none">
-            委託
-          </div>
-          <div className="flex items-start gap-3">
-            <div className={`p-2 rounded-sm bg-[#0D0D0D]/40 ${station.theme.cardAccentText}`}>
-               <Bike className="w-5 h-5" />
-            </div>
-            <div>
-              <p className={`font-display tracking-wide text-sm ${station.theme.cardAccentTitle}`}>
-                {station.isFinal ? "終點任務" : "路上任務（手機收起）"}
-              </p>
-              <p className={`mt-1 text-sm font-manuscript ${station.theme.cardAccentText}`}>
-                {station.task}
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Report Card */}

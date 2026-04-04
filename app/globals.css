@@ -67,7 +67,7 @@
 
 @layer base {
   html {
-    font-size: 106%;
+    font-size: 116.6%;
   }
   * {
     @apply border-border;
@@ -110,6 +110,11 @@
   100% { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes screen-reveal {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @keyframes dialogue-appear {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -118,6 +123,10 @@
 @layer utilities {
   .animate-fade-up {
     animation: fade-up-in 0.45s ease both;
+  }
+
+  .animate-screen-reveal {
+    animation: screen-reveal 1.5s ease both;
   }
 
   .animate-dialogue {

@@ -21,6 +21,7 @@ export interface StationData {
   maxLength?: number;
   revealDialogues?: string[];
   messengerReveal?: string;
+  entryDialogues?: string[];
 }
 
 export const STATIONS: Record<string, StationData> = {
@@ -45,6 +46,12 @@ export const STATIONS: Record<string, StationData> = {
     nextStation: "/station/2",
     departureMessage: "手機收起，用心感受路上的風吧！下一站見。",
     envelopeNarrative: "站一的元素是風與海——流動本身。",
+    entryDialogues: [
+      "感受到了嗎？打在臉上的，是新竹特產的『九降風』。（沒有感受到，就是我今天累了）",
+      "數百年來，這股強風不僅吹乾了米粉與柿餅，更雕塑出眼前這片北台灣最大的濕地。",
+      "早期討海人，就是在這無遮蔽的風勢中，踩著泥濘與海爭食。",
+      "現在，借用這股形塑大地的力量......",
+    ],
   },
   "2": {
     number: 2,
@@ -66,6 +73,11 @@ export const STATIONS: Record<string, StationData> = {
     task: "任何天氣：拍下此刻讓你感覺「暖」的那個畫面。",
     nextStation: "/station/3",
     departureMessage: "手機收起，用心感受路上的火吧！下一站見。",
+    entryDialogues: [
+      "通霄，早期原住民道卡斯族稱這裡為『吞霄』。",
+      "每當黃昏，巨大的紅日緩緩降入海平線，就像整片海洋張開大口，吞噬了天空中的火球。",
+      "留下燃燒般的橘紅晚霞。去尋找屬於你的火焰替身吧！",
+    ],
   },
   "3": {
     number: 3,
@@ -87,6 +99,11 @@ export const STATIONS: Record<string, StationData> = {
     task: "路上留意舊的東西：老屋、老樹、老招牌。",
     nextStation: "/station/4",
     departureMessage: "手機收起，繼續感受土地的厚度。終點見！",
+    entryDialogues: [
+      "兩百多年來，無數先民帶著對未知的恐懼橫渡黑水溝，最終在這裡雙腳踏上『實土』。",
+      "抬頭看看那些樑柱與石獅，不知名的匠人將畢生心血刻入木與石中，吸收了幾世代人的香火。",
+      "仔細看，去尋找那些阿公級的歲月痕跡。",
+    ],
   },
   "4": {
     number: 4,
@@ -113,6 +130,11 @@ export const STATIONS: Record<string, StationData> = {
     envelopeNarrative:
       "你騎過了風、穿過了火、踏過了土木，如今以金收束。這封信等了你整整一天。",
     maxLength: 150,
+    entryDialogues: [
+      "你抵達了。這座建於 1917 年的紅磚車站，曾是台灣鐵路全線貫通的心臟。",
+      "百年後，它等到了騎行百公里的你。信封裡其實什麼都沒有——",
+      "因為真正的『金』，是你一路扛過來的痠痛、汗水與堅持。留下你淬鍊成金的一句話吧。",
+    ],
     revealDialogues: [
       "你小心地撕開信封封口。",
       "裡面......",

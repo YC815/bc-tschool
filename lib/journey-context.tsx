@@ -25,6 +25,7 @@ interface JourneyContextValue {
     data: Partial<StationSubmission>
   ) => Promise<void>;
   markSubmitted: (stationId: string, ts: number) => Promise<void>;
+  markJourneyComplete: () => Promise<void>;
   clearJourneyData: () => Promise<void>;
   setIntroSeen: () => Promise<void>;
 }
@@ -114,6 +115,13 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
     [state]
   );
 
+  const markJourneyComplete = useCallback(async () => {
+    if (!state) return;
+    const updated = { ...state, completedAt: Date.now() };
+    setState(updated);
+    await saveJourney(updated);
+  }, [state]);
+
   const clearJourneyData = useCallback(async () => {
     setState(null);
     await clearJourney();
@@ -134,6 +142,7 @@ export function JourneyProvider({ children }: { children: React.ReactNode }) {
         setNickname,
         saveStationDraft,
         markSubmitted,
+        markJourneyComplete,
         clearJourneyData,
         setIntroSeen,
       }}

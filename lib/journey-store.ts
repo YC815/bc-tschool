@@ -9,6 +9,7 @@ export interface JourneyState {
   submissions: Partial<Record<"1" | "2" | "3" | "4", StationSubmission>>;
   startedAt: number;
   introSeen?: boolean;
+  completedAt?: number;
 }
 
 const DB_NAME = "bc-tschool-journey";

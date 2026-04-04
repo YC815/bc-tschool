@@ -20,6 +20,7 @@ export default function Home() {
   const { state, isLoaded, setNickname, clearJourneyData } = useJourney();
   const [nickname, setNicknameInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Detect in-progress journey
   const hasProgress =
@@ -46,8 +47,13 @@ export default function Home() {
     }
   }, [isLoaded, state?.nickname]);
 
-  const handleStart = async () => {
+  const handleConfirmOpen = () => {
     if (!nickname.trim()) return;
+    setShowConfirm(true);
+  };
+
+  const handleStart = async () => {
+    setShowConfirm(false);
     setIsLoading(true);
     await setNickname(nickname.trim());
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -173,14 +179,14 @@ export default function Home() {
               placeholder="輸入暱稱開始旅程"
               value={nickname}
               onChange={(e) => setNicknameInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleStart()}
+              onKeyDown={(e) => e.key === "Enter" && handleConfirmOpen()}
               className="h-12 text-center bg-[#1A1208]/80 border-[#C9A84C]/30 text-[#E8D5A3] placeholder:text-[#E8D5A3]/30 focus-visible:ring-[#C9A84C]/20 font-manuscript"
             />
           </div>
 
           <button
             className="w-full h-12 rounded-md bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display tracking-wider btn-rpg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            onClick={handleStart}
+            onClick={handleConfirmOpen}
             disabled={!nickname.trim() || isLoading}
           >
             {isLoading ? (
@@ -194,6 +200,67 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-[#0D0D0D]/80 backdrop-blur-sm"
+            onClick={() => setShowConfirm(false)}
+          />
+
+          {/* Dialog */}
+          <div className="relative w-full max-w-sm scroll-border rounded-sm bg-[#0D0D0D]/98 overflow-hidden animate-fade-up">
+            <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/60 to-transparent" />
+
+            <div className="p-6 space-y-5">
+              {/* Icon row */}
+              <div className="flex justify-center">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C9A84C]/20 to-[#D4822A]/10 border border-[#C9A84C]/30 flex items-center justify-center">
+                  <Bike className="w-7 h-7 text-[#C9A84C]" />
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="text-center space-y-2">
+                <p className="text-xs font-display text-[#C9A84C]/60 tracking-[0.3em] uppercase">
+                  委託確認
+                </p>
+                <h2 className="text-lg font-display text-[#E8D5A3] tracking-wide leading-snug">
+                  傳遞者
+                  <span className="text-[#C9A84C] mx-1.5">{nickname.trim()}</span>
+                </h2>
+                <p className="font-manuscript text-[#E8D5A3]/70 leading-relaxed">
+                  準備好踏上這趟元素之旅了嗎？
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-[#C9A84C]/15" />
+
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 h-11 rounded-sm border border-[#C9A84C]/25 text-[#E8D5A3]/50 font-display text-sm tracking-wider hover:border-[#C9A84C]/40 hover:text-[#E8D5A3]/70 transition-all active:scale-[0.97]"
+                >
+                  再等等
+                </button>
+                <button
+                  onClick={handleStart}
+                  className="flex-1 h-11 rounded-sm bg-gradient-to-r from-[#C9A84C] to-[#D4822A] text-[#1A1208] font-display text-sm tracking-wider btn-rpg flex items-center justify-center gap-1.5"
+                >
+                  出發
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C]/20 to-transparent" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
