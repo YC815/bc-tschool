@@ -1,27 +1,50 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Wind, Waves, Flame, TreePine, Landmark } from "lucide-react";
-import { StationData } from "@/lib/stations";
+import {
+  Wind, Waves, Flame, TreePine, Landmark,
+  MapPin, BookOpen, Map, Shell, Sparkles, Wheat,
+} from "lucide-react";
+import { StationData, DialogueLine } from "@/lib/stations";
 
 interface StationDialogueProps {
-  dialogues: string[];
+  dialogues: (string | DialogueLine)[];
   theme: StationData["theme"];
   stationNumber: number;
+  speakerName?: string;
   onComplete: () => void;
 }
 
-const STATION_ICONS: Record<number, React.ComponentType<{ className?: string }>> = {
+const STATION_ICONS: Record<number, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   1: Waves,
   2: Flame,
   3: TreePine,
   4: Landmark,
 };
 
+const TOPIC_ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  Wind,
+  MapPin,
+  BookOpen,
+  Map,
+  Shell,
+  Sparkles,
+  Wheat,
+  Waves,
+  Flame,
+  TreePine,
+  Landmark,
+};
+
+function parseLine(line: string | DialogueLine): DialogueLine {
+  return typeof line === "string" ? { text: line } : line;
+}
+
 export function StationDialogue({
   dialogues,
   theme,
   stationNumber,
+  speakerName = "使者",
   onComplete,
 }: StationDialogueProps) {
   const [dialogueIndex, setDialogueIndex] = useState(0);
@@ -32,12 +55,15 @@ export function StationDialogue({
   const StationIcon = STATION_ICONS[stationNumber] ?? Landmark;
   const accentHex = theme.cardAccentTitle.match(/#[A-Fa-f0-9]{6}/)?.[0] ?? "#C9A84C";
 
+  const currentLine = parseLine(dialogues[dialogueIndex]);
+  const TopicIcon = currentLine.icon ? (TOPIC_ICONS[currentLine.icon] ?? null) : null;
+
   useEffect(() => {
     if (typingRef.current) clearTimeout(typingRef.current);
     setDisplayText("");
     setIsTyping(true);
 
-    const text = dialogues[dialogueIndex];
+    const text = parseLine(dialogues[dialogueIndex]).text;
     let i = 0;
 
     const type = () => {
@@ -60,7 +86,7 @@ export function StationDialogue({
   const handleAdvance = () => {
     if (isTyping) {
       if (typingRef.current) clearTimeout(typingRef.current);
-      setDisplayText(dialogues[dialogueIndex]);
+      setDisplayText(parseLine(dialogues[dialogueIndex]).text);
       setIsTyping(false);
     } else if (dialogueIndex < dialogues.length - 1) {
       setDialogueIndex((i) => i + 1);
@@ -97,15 +123,25 @@ export function StationDialogue({
           />
 
           <div className="p-6 min-h-[168px] space-y-4">
-            {/* Speaker */}
-            <div className="flex items-center gap-2">
-              <Wind className="w-4 h-4" style={{ color: accentHex }} />
-              <span
-                className="font-display text-sm tracking-wider"
-                style={{ color: accentHex }}
-              >
-                風之使者
-              </span>
+            {/* Speaker + optional topic icon badge */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <StationIcon className="w-4 h-4" style={{ color: accentHex }} />
+                <span
+                  className="font-display text-sm tracking-wider"
+                  style={{ color: accentHex }}
+                >
+                  {speakerName}
+                </span>
+              </div>
+              {TopicIcon && (
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300"
+                  style={{ background: `${accentHex}20`, border: `1px solid ${accentHex}40` }}
+                >
+                  <TopicIcon className="w-4 h-4" style={{ color: accentHex }} />
+                </div>
+              )}
             </div>
 
             {/* Typewriter text */}

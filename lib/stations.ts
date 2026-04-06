@@ -1,3 +1,8 @@
+export interface DialogueLine {
+  text: string;
+  icon?: string; // Lucide icon component name, e.g. "MapPin"
+}
+
 export interface StationData {
   number: number;
   name: string;
@@ -10,6 +15,7 @@ export interface StationData {
     cardAccentText: string;
     cardAccentTitle: string;
   };
+  speakerName?: string;
   guide: string[];
   task: string;
   prompt?: string;
@@ -21,7 +27,7 @@ export interface StationData {
   maxLength?: number;
   revealDialogues?: string[];
   messengerReveal?: string;
-  entryDialogues?: string[];
+  entryDialogues?: (string | DialogueLine)[];
 }
 
 export const STATIONS: Record<string, StationData> = {

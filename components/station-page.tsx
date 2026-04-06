@@ -389,6 +389,7 @@ export function StationPage({ station }: StationPageProps) {
           dialogues={station.entryDialogues}
           theme={station.theme}
           stationNumber={station.number}
+          speakerName={station.speakerName}
           onComplete={() => setDialogueDone(true)}
         />
       )}
